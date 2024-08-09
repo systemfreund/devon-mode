@@ -378,9 +378,7 @@ are fetched, a message is displayed to the user."
            (t
             (insert (propertize (format "%s: " type) 'face face))
             (insert (format "%s\n" content))))
-          (goto-char (point-max))
-          (when devon-auto-scroll
-            (recenter -1)))))))
+          (goto-char (point-max)))))))
               (and (eq devon-events-filter 'no-environment)
                    (not (or (string= type "EnvironmentRequest")
                             (string= type "EnvironmentResponse")))))
