@@ -117,7 +117,7 @@ Possible values are:
   "Interactively select a checkpoint from the list of encountered checkpoints."
   (interactive)
   (if (null devon-checkpoint-ids)
-      (message "No checkpoints available.")
+      (devon-log "No checkpoints available.")
     (let* ((sorted-checkpoints (sort (copy-sequence devon-checkpoint-ids)
                                      (lambda (a b) (string-greaterp (cdr a) (cdr b)))))
            (checkpoint-options (mapcar (lambda (checkpoint)
@@ -125,13 +125,13 @@ Possible values are:
                                                (car checkpoint)))
                                        sorted-checkpoints))
            (selected-checkpoint (completing-read "Select a checkpoint: " checkpoint-options nil t)))
-      (message "Selected checkpoint: %s" (cdr (assoc selected-checkpoint checkpoint-options))))))
+      (devon-log "Selected checkpoint: %s" (cdr (assoc selected-checkpoint checkpoint-options))))))
 
 (defun devon-handle-network-error (error-symbol data)
   "Handle network errors in Devon operations.
 ERROR-SYMBOL is the type of error, DATA contains error details."
   (let ((error-message (error-message-string data)))
-    (message "Devon network error: %s" error-message)
+    (devon-log "Devon network error: %s" error-message)
     (when (called-interactively-p 'any)
       (signal error-symbol data))))
 
@@ -251,7 +251,7 @@ ORIG-FUN is the original function, ARGS are its arguments."
   (devon-update-buffer (list event) t))
 
 (defun devon-stream-sentinel (proc event)
-  "Handle Devon event stream connection state changes."
+  "Handle status changes in the Devon event stream."
   (when (string-match "\\(open\\|closed\\|connection broken by remote peer\\)" event)
     (let ((status (match-string 1 event)))
       (devon-set-event-stream-status
@@ -260,10 +260,9 @@ ORIG-FUN is the original function, ARGS are its arguments."
         ((string= status "closed") "closed")
         ((string= status "connection broken by remote peer") "disconnected")
         (t nil)))
-      (message "Devon event stream %s" status)
+      (devon-log "Devon event stream %s" status)
       (when (string-match "closed\\|connection broken by remote peer" event)
         (run-with-timer 5 nil 'devon-start-event-stream)))))
-
 (defun devon-fetch-events ()
   "Fetch events from the Devon server."
   (let* ((url (format "%s:%d/sessions/%s/events" devon-backend-url devon-port devon-session-id))
@@ -423,6 +422,14 @@ Otherwise, replace the buffer content with the new events."
 
 (defvar devon-debug-mode nil
   "Flag to indicate if Devon is in debug mode.")
+
+(defun devon-log (format-string &rest args)
+  "Write a log message to the *Devon Log* buffer.
+FORMAT-STRING and ARGS are the same as for `message'."
+  (with-current-buffer (get-buffer-create "*Devon Log*")
+    (goto-char (point-max))
+    (insert (apply #'format format-string args))
+    (insert "\n")))
 
 (defun devon-toggle-debug-mode ()
   "Toggle Devon debug mode."
