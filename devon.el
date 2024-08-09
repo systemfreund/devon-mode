@@ -127,14 +127,10 @@ ORIG-FUN is the original function, ARGS are its arguments."
   (interactive)
   (customize-group 'devon))
 
-(defvar devon-stream-process nil
-  "Process object for the Devon event stream.")
-
 (defun devon-start-event-stream ()
   "Start streaming events from the Devon server."
   (interactive)
-  (when devon-stream-process
-    (delete-process devon-stream-process))
+  (devon-stop-event-stream)
   (let ((url (format "%s:%d/sessions/%s/events/stream" devon-backend-url devon-port devon-session-id)))
     (setq devon-stream-process
           (make-network-process
@@ -150,7 +146,12 @@ ORIG-FUN is the original function, ARGS are its arguments."
      (format "GET %s HTTP/1.1\r\nHost: %s\r\n\r\n"
              (url-filename (url-generic-parse-url url))
              (url-host (url-generic-parse-url devon-backend-url))))
-    (devon-set-event-stream-status "active")))
+    (devon-set-event-stream-status "active")
+    ; also 'replay' existing events:
+    (mapc (lambda (event)
+            (devon-stream-filter nil (concat "data: " (json-encode event) "\n\n")))
+          (devon-fetch-events))
+    ))
 
 (defun devon-stop-event-stream ()
   "Stop the Devon event stream and clean up associated resources."
@@ -309,11 +310,13 @@ are fetched, a message is displayed to the user."
 
 (defun devon-reset-session ()
   (interactive)
+  (devon-update-buffer '())
   (let ((url-request-method "PATCH")
         (url (format "%s:%d/sessions/%s/reset" devon-backend-url devon-port devon-session-id)))
     (with-current-buffer (url-retrieve-synchronously url)
       (goto-char url-http-end-of-headers)
-      (json-read))))
+      (json-read))
+    (devon-start-event-stream)))
 
 (defun devon-start-session ()
   "Start the Devon session and update the session state."
@@ -513,8 +516,7 @@ If SKIP-EVENT-LOOP is non-nil, don't start the event loop (useful for testing)."
     (with-current-buffer buffer
       (devon-mode)
       (let ((inhibit-read-only t))
-        (erase-buffer)
-        (devon-fetch-and-display-events))
+        (erase-buffer))
       (setq buffer-read-only nil)
       (add-hook 'kill-buffer-hook #'devon-stop-event-stream nil t)
       (add-hook 'kill-buffer-hook #'devon-stop-update-timer nil t))
