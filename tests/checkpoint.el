@@ -1,4 +1,4 @@
-;;; test-devon.el --- Tests for devon.el
+;;; checkpoint.el --- Tests for devon.el
 
 ;;; Commentary:
 ;; This file contains tests for devon.el
@@ -23,5 +23,5 @@
       (should (member "test-checkpoint-123" devon-checkpoint-ids))
     (kill-buffer test-buffer))))
 
-(provide 'test-devon)
-;;; test-devon.el ends here
+
+;;; checkpoint.el ends here
