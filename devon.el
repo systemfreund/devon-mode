@@ -219,6 +219,14 @@ Returns the checkpoint_id of the selected checkpoint."
                                      nil t)))
     (cdr (assoc selection formatted-checkpoints))))
 
+(defun devon-get-state-info ()
+  "Fetch the current scratchpad and task from the Devon server."
+  (let* ((config (devon-fetch-config))
+         (state (cdr (assoc 'state config)))
+         (scratchpad (cdr (assoc 'scratchpad state)))
+         (task (cdr (assoc 'task state))))
+    (list :scratchpad scratchpad :task task)))
+
 (defun devon-stream-filter (proc string)
   "Process incoming data from the Devon event stream."
   (setq devon-stream-buffer (concat devon-stream-buffer string))
