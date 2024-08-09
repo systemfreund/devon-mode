@@ -79,14 +79,6 @@ Possible values are:
 (defvar devon-stream-process nil
   "Process object for the Devon event stream.")
 
-(defvar devon-checkpoint-ids nil
-  "List of checkpoint IDs and their timestamps encountered during the session.")
-
-(defun devon-add-checkpoint-id (id)
-  "Add a checkpoint ID and its timestamp to the list of encountered checkpoints."
-  (let ((timestamp (current-time-string)))
-    (add-to-list 'devon-checkpoint-ids (cons id timestamp) t)))
-
 ;; Keymap
 (defvar devon-mode-map
   (let ((map (make-sparse-keymap)))
@@ -98,7 +90,6 @@ Possible values are:
     (define-key map (kbd "C-c C-s c") 'devon-create-session)
     (define-key map (kbd "C-c C-s s") 'devon-start-session)
     (define-key map (kbd "C-c C-s e") 'devon-stop-event-stream)
-    (define-key map (kbd "C-c d p") 'devon-select-checkpoint)
     map)
   "Keymap for Devon mode.
 \\{devon-mode-map}
@@ -110,22 +101,7 @@ Possible values are:
 \\[devon-reset-session] - Reset Devon session
 \\[devon-create-session] - Create a new Devon session
 \\[devon-start-session] - Start Devon session
-\\[devon-stop-event-stream] - Stop Devon event stream
-\\[devon-select-checkpoint] - Select a checkpoint")
-
-(defun devon-select-checkpoint ()
-  "Interactively select a checkpoint from the list of encountered checkpoints."
-  (interactive)
-  (if (null devon-checkpoint-ids)
-      (devon-log "No checkpoints available.")
-    (let* ((sorted-checkpoints (sort (copy-sequence devon-checkpoint-ids)
-                                     (lambda (a b) (string-greaterp (cdr a) (cdr b)))))
-           (checkpoint-options (mapcar (lambda (checkpoint)
-                                         (cons (format "Checkpoint %s (%s)" (car checkpoint) (cdr checkpoint))
-                                               (car checkpoint)))
-                                       sorted-checkpoints))
-           (selected-checkpoint (completing-read "Select a checkpoint: " checkpoint-options nil t)))
-      (devon-log "Selected checkpoint: %s" (cdr (assoc selected-checkpoint checkpoint-options))))))
+\\[devon-stop-event-stream] - Stop Devon event stream")
 
 (defun devon-handle-network-error (error-symbol data)
   "Handle network errors in Devon operations.
@@ -291,7 +267,6 @@ This function retrieves events using `devon-fetch-events` and then
 updates the Devon buffer using `devon-update-buffer`. If no events
 are fetched, a message is displayed to the user."
   (interactive)
-  (setq devon-checkpoint-ids nil)  ; Clear the list of checkpoints
   (let ((events (devon-fetch-events)))
     (if events
         (progn
@@ -389,8 +364,6 @@ are fetched, a message is displayed to the user."
            ((eq devon-events-filter 'conversation)
             (member type '("UserRequest" "UserResponse" "Checkpoint" "GitAskUser" "GitResolve" "ModelResponse")))
            (t t))))
-    (when (string= type "Checkpoint")
-      (devon-add-checkpoint-id content))
     (when display-event
       (cond
        ((string= type "Checkpoint")
