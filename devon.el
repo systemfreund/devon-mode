@@ -564,7 +564,7 @@ If SKIP-EVENT-LOOP is non-nil, don't start the event loop (useful for testing)."
     (switch-to-buffer buffer))
   (unless skip-event-loop
     ;;(devon-start-update-timer)
-    (devon-start-event-stream)))
+    (devon-start-event-stream t)))
 
 (provide 'devon)
 
