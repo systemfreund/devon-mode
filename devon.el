@@ -194,10 +194,11 @@ ORIG-FUN is the original function, ARGS are its arguments."
         
         (if (string-prefix-p ": keepalive" match)
             (message "[Devon Debug] Received keepalive")
-          (let* ((json-string (match-string 2 match))
-                 (event (json-read-from-string json-string)))
-            (message "[Devon Debug] Parsed event: %s" event)
-            (devon-process-event event)))
+          (let* ((json-string (match-string 2 match)))
+            (message "[Devon Debug] JSON string before parsing: %s" json-string)
+            (let ((event (json-read-from-string json-string)))
+              (message "[Devon Debug] Parsed event: %s" event)
+              (devon-process-event event))))
         
         (setq devon-stream-buffer (concat (substring devon-stream-buffer 0 match-start)
                                           (substring devon-stream-buffer match-end)))
