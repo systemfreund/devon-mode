@@ -391,7 +391,7 @@ For all other events, display as 'type:\ncontent'. Respects the `devon-events-fi
           (cond
            ((eq devon-events-filter 'all) t)
            ((eq devon-events-filter 'conversation)
-            (member type '("UserRequest" "UserResponse" "Checkpoint" "GitAskUser" "GitResolve")))
+            (member type '("UserRequest" "UserResponse" "Checkpoint" "GitAskUser" "GitResolve" "ModelResponse")))
            (t t))))
     (when (string= type "Checkpoint")
       (devon-add-checkpoint-id content))
@@ -403,6 +403,13 @@ For all other events, display as 'type:\ncontent'. Respects the `devon-events-fi
         (insert (format "Human:\n%s\n\n\n" content)))
        ((string= type "UserRequest")
         (insert (format "Devon:\n%s\n\n\n" content)))
+       ((string= type "ModelResponse")
+        ; TODO depending on `content`s value insert different things.
+        ; Thoughts should be inserted as: "Devon (Thought):\n$thought"
+        ; Actions should be inserted as: "Devon (Action):\n$action"
+        ; Here's an example of a value of `content`:
+        ; '((type . "ModelResponse") (content . ((thought . "Test thought") (action . "Test action"))))
+        )
        (t
         (insert (format "%s:\n%s\n\n\n" type content)))))))
 
