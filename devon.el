@@ -49,6 +49,12 @@ Possible values are:
                  (const :tag "Conversation events only" conversation))
   :group 'devon)
 
+(defcustom devon-default-model "claude-3-5-sonnet"
+  "The LLM Devon should use."
+  :type '(choice (const :tag "claude-3-5-sonnet" "claude-3-5-sonnet")
+                 (const :tag "claude-3-haiku" "claude-3-haiku"))
+  :group 'devon)
+
 (defvar devon-mode-line-format
   '(:eval
     (concat
@@ -341,7 +347,7 @@ are fetched, a message is displayed to the user."
          (url-request-data
           (json-encode
            `(
-             ("model" . "claude-3-haiku")             
+             ("model" . devon-default-model)
              ("versioning_type" . ,(or devon-versioning-type "none"))
              )))
          (response-buffer (url-retrieve-synchronously url)))
