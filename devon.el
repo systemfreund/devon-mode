@@ -255,12 +255,17 @@ are fetched, a message is displayed to the user."
       (json-read))))
 
 (defun devon-start-session ()
+  "Start the Devon session and update the session state."
   (interactive)
+  (setq devon-session-state 'running)
+  (devon-update-status)
   (let ((url-request-method "PATCH")
         (url (format "%s:%d/sessions/%s/start" devon-backend-url devon-port devon-session-id)))
     (with-current-buffer (url-retrieve-synchronously url)
       (goto-char url-http-end-of-headers)
-      (json-read))))
+      (let ((response (json-read)))
+        (message "Devon session started")
+        response))))
 
 (defcustom devon-versioning-type 'none
   "Versioning type"
