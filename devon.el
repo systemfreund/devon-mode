@@ -449,6 +449,16 @@ are fetched, a message is displayed to the user."
             (member type '("UserRequest" "UserResponse" "Checkpoint" "GitError" "GitAskUser" "GitResolve" "ModelResponse" "Task" "Error" "Stop")))
            (t t))))
     (when display-event
+      (let ((inhibit-read-only t))
+        (goto-char (point-max))
+        (cond
+         ((string= type "GitAskUser")
+          (insert (format "Git: %s\n" (cdr (assoc 'message content)))))
+         ;; Add other conditions for different event types here
+         (t
+          (insert (format "%s: %s\n" type content))))
+        (goto-char (point-max))))))
+    (when display-event
       (cond
        ((string= type "Checkpoint")
         (insert (format "Checkpoint: %s\n\n" content)))
@@ -542,12 +552,42 @@ FILTER can be 'all, 'conversation, or 'no-environment."
   (font-lock-mode 1)
   (setq-local mode-line-format (list "" mode-line-format devon-mode-line-format)))
 
+(defvar devon-pending-git-question nil
+  "Stores the pending Git question if there is one.")
+
 (defun devon-handle-user-input ()
   "Handle user input and send responses to the Devon session."
   (interactive)
-  (let ((input (read-string "To Devon> ")))
-    (devon-send-response input)
-    (devon-set-status 'thinking)))
+  (if devon-pending-git-question
+      (let ((input (read-string "Git Response> ")))
+        (devon-git-resolve input)
+        (setq devon-pending-git-question nil)
+        (devon-set-status 'thinking))
+    (let ((input (read-string "To Devon> ")))
+      (devon-send-response input)
+      (devon-set-status 'thinking))))
+
+(defun devon-display-event (event)
+  "Display an EVENT in the Devon buffer. Respects the `devon-events-filter` setting."
+  (let* ((type (cdr (assoc 'type event)))
+         (content (cdr (assoc 'content event)))
+         (display-event
+          (cond
+           ((eq devon-events-filter 'all) t)
+           ((eq devon-events-filter 'conversation)
+            (member type '("UserRequest" "UserResponse" "Checkpoint" "GitError" "GitAskUser" "GitResolve" "ModelResponse" "Task" "Error" "Stop")))
+           (t t))))
+    (when display-event
+      (let ((inhibit-read-only t))
+        (goto-char (point-max))
+        (cond
+         ((string= type "GitAskUser")
+          (setq devon-pending-git-question t)
+          (insert (format "Git: %s\n" (cdr (assoc 'message content)))))
+         ;; Add other conditions for different event types here
+         (t
+          (insert (format "%s: %s\n" type content))))
+        (goto-char (point-max))))))
 
 (defun devon-initialize-buffer (&optional skip-event-loop)
   "Initialize the Devon buffer and optionally start the event loop with PORT.
