@@ -1,0 +1,1 @@
+* When latest event is UserResponse the devon-status is 'thinking', however when the session is 'paused the status does not show [Paused]
