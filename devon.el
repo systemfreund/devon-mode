@@ -196,19 +196,24 @@ ORIG-FUN is the original function, ARGS are its arguments."
   (when (> (length devon-stream-buffer) 1000000)  ; Prevent buffer from growing too large
     (setq devon-stream-buffer (substring devon-stream-buffer -1000000))))
 
-(defun devon-process-event (event)
-  "Process a single event from the Devon event stream."
+(defun devon-update-status-from-event (event)
+  "Update devon-status based on the event type."
   (let ((type (cdr (assoc 'type event))))
     (cond
      ((string= type "ModelRequest")
-      (setq devon-status 'thinking)
-      (devon-update-status))
+      (setq devon-status 'thinking))
      ((string= type "UserRequest")
-      (setq devon-status 'waiting-for-user)
-      (devon-update-status))
+      (setq devon-status 'waiting-for-user))
      ((string= type "Stop")
-      (message "Devon has left the chat.")))
-    (devon-update-buffer (list event) t)))
+      (setq devon-status 'stopped)))
+    (devon-update-status)))
+
+(defun devon-process-event (event)
+  "Process a single event from the Devon event stream."
+  (devon-update-status-from-event event)
+  (when (string= (cdr (assoc 'type event)) "Stop")
+    (message "Devon has left the chat."))
+  (devon-update-buffer (list event) t))
 
 (defun devon-stream-sentinel (proc event)
   "Handle Devon event stream connection state changes."
@@ -250,17 +255,8 @@ are fetched, a message is displayed to the user."
     (if events
         (progn
           (devon-update-buffer events)
-          (let ((last-event (car (last events))))
-            (when last-event
-              (let ((type (cdr (assoc 'type last-event))))
-                (cond
-                 ((string= type "ModelRequest")
-                  (setq devon-status 'thinking))
-                 ((string= type "UserRequest")
-                  (setq devon-status 'waiting-for-user))
-                 ((string= type "Stop")
-                  (setq devon-status 'stopped)))
-                (devon-update-status)))))
+          (when-let ((last-event (car (last events))))
+            (devon-update-status-from-event last-event)))
           (devon-update-buffer events)
           (message "Devon buffer updated with new events."))
       (message "No new events to display.")))
