@@ -398,6 +398,23 @@ For all other events, display as 'type:\ncontent'. Respects the `devon-events-fi
     (when display-event
       (cond
        ((string= type "Checkpoint")
+        (insert (format "Checkpoint: %s\n" content)))
+       ((string= type "UserResponse")
+        (insert (format "Human: %s\n" content)))
+       ((string= type "UserRequest")
+        (insert (format "Devon: %s\n" content)))
+       ((string= type "ModelResponse")
+        (let ((thought (cdr (assoc 'thought content)))
+              (action (cdr (assoc 'action content))))
+          (insert (format "Devon (Thought): %s\n" thought))
+          (when action
+            (insert (format "Devon (Action): %s\n" action)))))
+       ((string= type "GitAskUser")
+        (insert (format "Git: %s\n" content)))
+       ((string= type "GitResolve")
+        (insert (format "Git Resolve: %s\n" content)))
+       (t
+        (insert (format "%s:\n%s\n" type content)))))))
         (insert (format "Checkpoint:\n%s\n\n\n" content)))
        ((string= type "UserResponse")
         (insert (format "Human:\n%s\n\n\n" content)))
