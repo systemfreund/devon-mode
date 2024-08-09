@@ -195,7 +195,7 @@ ORIG-FUN is the original function, ARGS are its arguments."
 
 (defun devon-set-session-state (new-state)
   "Set the Devon session state and update the mode line."
-  (setq devon-session-state new-state)
+  (setq devon-session-state (intern new-state))
   (devon-log "Devon session state changed to: %s" new-state)
   (devon-modeline-update))
 
