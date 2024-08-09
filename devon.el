@@ -335,22 +335,10 @@ are fetched, a message is displayed to the user."
         (devon-initialize-buffer)
         response))))
 
-(defvar devon-event-faces
-  '((UserResponse . (:background "#E6F3FF" :foreground "black" :weight bold))
-    (UserRequest . (:background "#E6FFE6" :foreground "blue" :weight bold))
-    (ModelResponse . (:background "#FFE6F0" :foreground "red" :weight bold)))
-  "Faces for different event types in Devon mode.")
-
 (defun devon-display-event (event)
-  "Format and display an EVENT in the Devon buffer based on `devon-events-filter`."
+  "Display an EVENT in the Devon buffer."
   (let* ((type (cdr (assoc 'type event)))
-         (content (cdr (assoc 'content event)))
-         (face (cdr (assoc (intern type) devon-event-faces))))
-    (when (or (eq devon-events-filter 'all)
-              (and (eq devon-events-filter 'conversation)
-                   (or (string= type "UserResponse")
-                       (string= type "UserRequest")
-                       (string= type "Task")))
+         (content (cdr (assoc 'content event))))
               (string= type "Checkpoint"))
       (with-current-buffer (get-buffer-create "*Devon*")
         (let ((inhibit-read-only t))
