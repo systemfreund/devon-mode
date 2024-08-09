@@ -391,7 +391,7 @@ For all other events, display as 'type:\ncontent'. Respects the `devon-events-fi
           (cond
            ((eq devon-events-filter 'all) t)
            ((eq devon-events-filter 'conversation)
-            (member type '("UserRequest" "UserResponse" "Checkpoint")))
+            (member type '("UserRequest" "UserResponse" "Checkpoint" "GitAskUser" "GitResolve")))
            (t t))))
     (when (string= type "Checkpoint")
       (devon-add-checkpoint-id content))
