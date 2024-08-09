@@ -307,7 +307,8 @@ are fetched, a message is displayed to the user."
 
 (defcustom devon-versioning-type 'none
   "Versioning type"
-  :type '(choice (const :tag "git" git)
+  :type '(choice (const :tag "none" none)
+                 (const :tag "git" git)
                  (const :tag "fossil" fossil))
   :group 'devon)
 
@@ -350,11 +351,12 @@ are fetched, a message is displayed to the user."
               (and (eq devon-events-filter 'no-environment)
                    (not (or (string= type "EnvironmentRequest")
                             (string= type "EnvironmentResponse")))))
+      (insert "\n\n\n") ; Add 3 lines of margin at the top
       (cond
        ((string= type "UserResponse")
-        (insert (propertize (format "Human: %s\n\n" content) 'face face)))
+        (insert (propertize (format "Human: %s\n" content) 'face face)))
        ((string= type "UserRequest")
-        (insert (propertize (format "Human Request: %s\n\n" content) 'face face)))
+        (insert (propertize (format "Human Request: %s\n" content) 'face face)))
        ((and (string= type "ModelResponse")
              (not (eq devon-events-filter 'conversation)))
         (let ((parsed-content (json-read-from-string content)))
@@ -363,23 +365,23 @@ are fetched, a message is displayed to the user."
         (when (cdr (assoc 'command parsed-content))
           (insert (propertize "Devon (Command): " 'face '(:foreground "green" :weight bold)))
           (insert (propertize (format "%s\n" (cdr (assoc 'command parsed-content))) 'face '(:foreground "green"))))))
-     ((string= type "ToolRequest")
-      (insert (propertize "Command: " 'face '(:foreground "yellow" :weight bold)))
-      (insert (propertize (format "%s\n" (cdr (assoc 'raw_command content))) 'face '(:foreground "yellow"))))
-     ((string= type "ToolResponse")
-      (insert (propertize "Result: " 'face '(:foreground "cyan" :weight bold)))
-      (insert (propertize (format "%s\n" content) 'face '(:foreground "cyan"))))
-     ((string= type "Error")
-      (insert (propertize "Error: " 'face '(:foreground "red" :weight bold)))
-      (insert (propertize (format "%s\n" content) 'face '(:foreground "red"))))
-     ((string= type "Task")
-      (insert (propertize "Task: " 'face '(:foreground "magenta" :weight bold)))
-      (insert (propertize (format "%s\n" content) 'face '(:foreground "magenta"))))
-     ((string= type "Interrupt")
-      (insert (propertize "Interrupt: " 'face '(:foreground "orange" :weight bold)))
-      (insert (propertize (format "%s\n" content) 'face '(:foreground "orange"))))
-     (t (insert (format "%s: %s\n" type content)))))))
-
+    ((string= type "ToolRequest")
+     (insert (propertize "Command: " 'face '(:foreground "yellow" :weight bold)))
+     (insert (propertize (format "%s\n" (cdr (assoc 'raw_command content))) 'face '(:foreground "yellow"))))
+    ((string= type "ToolResponse")
+     (insert (propertize "Result: " 'face '(:foreground "cyan" :weight bold)))
+     (insert (propertize (format "%s\n" content) 'face '(:foreground "cyan"))))
+    ((string= type "Error")
+     (insert (propertize "Error: " 'face '(:foreground "red" :weight bold)))
+     (insert (propertize (format "%s\n" content) 'face '(:foreground "red"))))
+    ((string= type "Task")
+     (insert (propertize "Task: " 'face '(:foreground "magenta" :weight bold)))
+     (insert (propertize (format "%s\n" content) 'face '(:foreground "magenta"))))
+    ((string= type "Interrupt")
+     (insert (propertize "Interrupt: " 'face '(:foreground "orange" :weight bold)))
+     (insert (propertize (format "%s\n" content) 'face '(:foreground "orange"))))
+    (t (insert (format "%s: %s\n" type content))))
+      (insert "\n\n\n")))) ; Add 3 lines of margin at the bottom
 (defun devon-update-buffer (events &optional append)
   "Update the Devon buffer with EVENTS.
 If APPEND is non-nil, append the events to the existing buffer content.
