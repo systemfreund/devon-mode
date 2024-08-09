@@ -213,9 +213,11 @@ ORIG-FUN is the original function, ARGS are its arguments."
 
 (defun devon-set-session-state (new-state)
   "Set the Devon session state and update the mode line."
-  (setq devon-session-state (intern new-state))
-  (devon-log "Devon session state changed to: %s" new-state)
-  (devon-modeline-update))
+  (let ((new-state-symbol (intern new-state)))
+    (when (not (eq devon-session-state new-state-symbol))
+      (setq devon-session-state new-state-symbol)
+      (devon-log "Devon session state changed to: %s" new-state)
+      (devon-modeline-update))))
 
 (defun devon-set-event-stream-status (new-status)
   "Set the Devon event stream status and update the mode line."
