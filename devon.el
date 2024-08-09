@@ -294,8 +294,8 @@ are fetched, a message is displayed to the user."
 (defun devon-display-event (event)
   "Display an EVENT in the Devon buffer, handling Checkpoint events specially.
 For Checkpoint events, extract the ID, add it to `devon-checkpoint-ids` with timestamp,
-but display only the ID. For all other events, display as 'type:\ncontent'.
-Respects the `devon-events-filter` setting."
+but display only the ID. For UserResponse and UserRequest, use 'Human:' and 'Devon:' labels respectively.
+For all other events, display as 'type:\ncontent'. Respects the `devon-events-filter` setting."
   (let* ((type (cdr (assoc 'type event)))
          (content (cdr (assoc 'content event)))
          (display-event
@@ -309,9 +309,15 @@ Respects the `devon-events-filter` setting."
     (when (string= type "Checkpoint")
       (devon-add-checkpoint-id content))
     (when display-event
-      (if (string= type "Checkpoint")
-          (insert (format "Checkpoint:\n%s\n\n\n" content))
-        (insert (format "%s:\n%s\n\n\n" type content))))))
+      (cond
+       ((string= type "Checkpoint")
+        (insert (format "Checkpoint:\n%s\n\n\n" content)))
+       ((string= type "UserResponse")
+        (insert (format "Human:\n%s\n\n\n" content)))
+       ((string= type "UserRequest")
+        (insert (format "Devon:\n%s\n\n\n" content)))
+       (t
+        (insert (format "%s:\n%s\n\n\n" type content)))))))
 
 (defun devon-update-buffer (events &optional append)
   "Update the Devon buffer with EVENTS.
