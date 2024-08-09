@@ -198,10 +198,10 @@ ORIG-FUN is the original function, ARGS are its arguments."
             (match-end (match-end 0)))
         
         (if (string-prefix-p ": keepalive" match)
-            (devon-log "[Devon Debug] Received keepalive")
+            (devon-log "Received keepalive")
           (string-match "\\(data: \\(.+\\)\\)" match)
           (let* ((json-string (match-string 2 match)))
-            (devon-log "[Devon Debug] Received event: %s" json-string)
+            (devon-log "Received event: %s" json-string)
             (let ((event (json-read-from-string json-string)))
               (devon-process-event event))))
         
