@@ -64,7 +64,8 @@ Possible values are:
      (if devon-event-stream-status
          (format ", Stream: %s" devon-event-stream-status)
        "")
-     "]"))
+     "]"
+     (format ": %s" (symbol-name devon-status))))
   "Mode line format for Devon mode.")
 
 (defvar devon-status 'idle
