@@ -383,6 +383,7 @@ are fetched, a message is displayed to the user."
   "Display an EVENT in the Devon buffer, handling Checkpoint events specially.
 For Checkpoint events, extract the ID, add it to `devon-checkpoint-ids` with timestamp,
 but display only the ID. For UserResponse and UserRequest, use 'Human:' and 'Devon:' labels respectively.
+For ModelResponse, display thought and action separately.
 For all other events, display as 'type:\ncontent'. Respects the `devon-events-filter` setting."
   (let* ((type (cdr (assoc 'type event)))
          (content (cdr (assoc 'content event)))
