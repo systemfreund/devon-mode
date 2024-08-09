@@ -128,8 +128,9 @@ ORIG-FUN is the original function, ARGS are its arguments."
   (interactive)
   (customize-group 'devon))
 
-(defun devon-start-event-stream ()
-  "Start streaming events from the Devon server."
+(defun devon-start-event-stream (&optional replay-events)
+  "Start streaming events from the Devon server.
+If REPLAY-EVENTS is non-nil, replay existing events after starting the stream."
   (interactive)
   (devon-stop-event-stream)
   (let ((url (format "%s:%d/sessions/%s/events/stream" devon-backend-url devon-port devon-session-id)))
@@ -148,11 +149,11 @@ ORIG-FUN is the original function, ARGS are its arguments."
              (url-filename (url-generic-parse-url url))
              (url-host (url-generic-parse-url devon-backend-url))))
     (devon-set-event-stream-status "active")
-    ; also 'replay' existing events:
-    (mapc (lambda (event)
-            (devon-stream-filter nil (concat "data: " (json-encode event) "\n\n")))
-          (devon-fetch-events))
-    ))
+    (when replay-events
+      ;; Replay existing events:
+      (mapc (lambda (event)
+              (devon-stream-filter nil (concat "data: " (json-encode event) "\n\n")))
+            (devon-fetch-events)))))
 
 (defun devon-stop-event-stream ()
   "Stop the Devon event stream and clean up associated resources."
