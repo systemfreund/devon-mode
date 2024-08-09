@@ -323,7 +323,6 @@ are fetched, a message is displayed to the user."
       (let ((response (json-read)))
         (devon-log "Devon session started")
         (devon-update-session-state)
-        (devon-start-update-timer)
         response))))
 
 (defun devon-update-session-state ()
@@ -513,9 +512,11 @@ If SKIP-EVENT-LOOP is non-nil, don't start the event loop (useful for testing)."
         (erase-buffer)
         (devon-fetch-and-display-events))
       (setq buffer-read-only nil)
-      (add-hook 'kill-buffer-hook #'devon-stop-event-stream nil t))
+      (add-hook 'kill-buffer-hook #'devon-stop-event-stream nil t)
+      (add-hook 'kill-buffer-hook #'devon-stop-update-timer nil t))
     (switch-to-buffer buffer))
   (unless skip-event-loop
+    (devon-start-update-timer)
     (devon-start-event-stream)))
 
 (provide 'devon)
