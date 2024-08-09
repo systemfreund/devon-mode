@@ -263,7 +263,7 @@ are fetched, a message is displayed to the user."
                 (devon-update-status)))))
           (devon-update-buffer events)
           (message "Devon buffer updated with new events."))
-      (message "No new events to display."))))
+      (message "No new events to display.")))
 
 (defun devon-send-response (response)
   "Send a RESPONSE to the session with the given PORT."
