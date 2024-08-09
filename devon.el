@@ -184,6 +184,21 @@ ORIG-FUN is the original function, ARGS are its arguments."
     (cancel-timer devon-update-timer)
     (setq devon-update-timer nil)))
 
+(defun devon-fetch-config ()
+  "Fetch the current session data and configuration from the Devon server."
+  (let* ((url (format "%s:%d/sessions/%s/config" devon-backend-url devon-port devon-session-id))
+         (url-request-method "GET")
+         (url-request-extra-headers '(("Content-Type" . "application/json")))
+         (response-buffer (url-retrieve-synchronously url nil nil devon-request-timeout))
+         config)
+    (if response-buffer
+        (with-current-buffer response-buffer
+          (goto-char (point-min))
+          (re-search-forward "^$")
+          (setq config (json-read))
+          (kill-buffer))
+      (error "Failed to fetch Devon configuration"))
+    config))
 
 (defun devon-stream-filter (proc string)
   "Process incoming data from the Devon event stream."
