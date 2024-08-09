@@ -227,6 +227,7 @@ This function retrieves events using `devon-fetch-events` and then
 updates the Devon buffer using `devon-update-buffer`. If no events
 are fetched, a message is displayed to the user."
   (interactive)
+  (setq devon-checkpoint-ids nil)  ; Clear the list of checkpoints
   (let ((events (devon-fetch-events)))
     (if events
         (progn
