@@ -198,10 +198,10 @@ ORIG-FUN is the original function, ARGS are its arguments."
             (match-end (match-end 0)))
         
         (if (string-prefix-p ": keepalive" match)
-            (message "[Devon Debug] Received keepalive")
+            (devon-log "[Devon Debug] Received keepalive")
           (string-match "\\(data: \\(.+\\)\\)" match)
           (let* ((json-string (match-string 2 match)))
-            (message "[Devon Debug] Received event: %s" json-string)
+            (devon-log "[Devon Debug] Received event: %s" json-string)
             (let ((event (json-read-from-string json-string)))
               (devon-process-event event))))
         
@@ -214,19 +214,19 @@ ORIG-FUN is the original function, ARGS are its arguments."
 (defun devon-set-status (new-status)
   "Set the Devon status and update the mode line."
   (setq devon-status new-status)
-  (message "Devon status changed to: %s" new-status)
+  (devon-log "Devon status changed to: %s" new-status)
   (devon-modeline-update))
 
 (defun devon-set-session-state (new-state)
   "Set the Devon session state and update the mode line."
   (setq devon-session-state new-state)
-  (message "Devon session state changed to: %s" new-state)
+  (devon-log "Devon session state changed to: %s" new-state)
   (devon-modeline-update))
 
 (defun devon-set-event-stream-status (new-status)
   "Set the Devon event stream status and update the mode line."
   (setq devon-event-stream-status new-status)
-  (message "Devon event stream status changed to: %s" new-status)
+  (devon-log "Devon event stream status changed to: %s" new-status)
   (devon-modeline-update))
 
 (defun devon-status-consume-event (event)
@@ -247,7 +247,7 @@ ORIG-FUN is the original function, ARGS are its arguments."
   "Process a single event from the Devon event stream."
   (devon-status-consume-event event)
   (when (string= (cdr (assoc 'type event)) "Stop")
-    (message "Devon has left the chat."))
+    (devon-log "Devon has left the chat."))
   (devon-update-buffer (list event) t))
 
 (defun devon-stream-sentinel (proc event)
@@ -280,9 +280,9 @@ ORIG-FUN is the original function, ARGS are its arguments."
               (let ((json-array-type 'list))
                 (json-read))
             (error
-             (message "Error parsing Devon JSON response: %s" (error-message-string err))
+             (devon-log "Error parsing Devon JSON response: %s" (error-message-string err))
              nil)))
-      (message "Error fetching Devon events from server: No response received")
+      (devon-log "Error fetching Devon events from server: No response received")
       nil)))
 
 (defun devon-fetch-and-display-events ()
@@ -299,8 +299,8 @@ are fetched, a message is displayed to the user."
           (when-let ((last-event (car (last events))))
             (devon-status-consume-event last-event)))
           (devon-update-buffer events)
-          (message "Devon buffer updated with new events."))
-      (message "No new events to display.")))
+          (devon-log "Devon buffer updated with new events."))
+      (devon-log "No new events to display.")))
 
 (defun devon-send-response (response)
   "Send a RESPONSE to the session with the given PORT."
@@ -327,7 +327,7 @@ are fetched, a message is displayed to the user."
     (with-current-buffer (url-retrieve-synchronously url)
       (goto-char url-http-end-of-headers)
       (let ((response (json-read)))
-        (message "Devon session started")
+        (devon-log "Devon session started")
         response))))
 
 (defcustom devon-versioning-type 'none
@@ -353,7 +353,7 @@ are fetched, a message is displayed to the user."
     (with-current-buffer response-buffer
       (goto-char url-http-end-of-headers)
       (let ((response (json-read)))
-        (message "New Devon session created with ID: %s" response)
+        (devon-log "New Devon session created with ID: %s" response)
         (devon-initialize-buffer)
         response))))
 
@@ -367,7 +367,7 @@ are fetched, a message is displayed to the user."
     (with-current-buffer response-buffer
       (goto-char url-http-end-of-headers)
       (let ((response (json-read)))
-        (message "Event sent to Devon session %s: %s" devon-session-id response)        
+        (devon-log "Event sent to Devon session %s: %s" devon-session-id response)        
         response))))
 
 (defun devon-git-resolve (answer &optional)
@@ -435,7 +435,7 @@ FORMAT-STRING and ARGS are the same as for `message'."
   "Toggle Devon debug mode."
   (interactive)
   (setq devon-debug-mode (not devon-debug-mode))
-  (message "Devon debug mode %s" (if devon-debug-mode "enabled" "disabled")))
+  (devon-log "Devon debug mode %s" (if devon-debug-mode "enabled" "disabled")))
 
 (defun devon-set-events-filter (filter)
   "Set the events filter for Devon.
@@ -444,7 +444,7 @@ FILTER can be 'all, 'conversation, or 'no-environment."
    (list (completing-read "Choose filter: " '("all" "conversation" "no-environment") nil t)))
   (let ((filter-symbol (intern filter)))
     (setq devon-events-filter filter-symbol)
-    (message "Devon events filter set to %s" filter)))
+    (devon-log "Devon events filter set to %s" filter)))
 
 
 (defvar devon-font-lock-keywords
