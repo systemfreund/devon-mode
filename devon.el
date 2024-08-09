@@ -202,6 +202,21 @@ ORIG-FUN is the original function, ARGS are its arguments."
       (error "Failed to fetch Devon configuration"))
     config))
 
+(defun devon-select-checkpoint ()
+  "Let the user select a checkpoint from the current session configuration."
+  (let* ((config (devon-fetch-config))
+         (checkpoints (cdr (assoc 'checkpoints config)))
+         (formatted-checkpoints
+          (mapcar (lambda (checkpoint)
+                    (let ((id (cdr (assoc 'checkpoint_id checkpoint)))
+                          (message (cdr (assoc 'commit_message checkpoint))))
+                      (cons (format "%s: %s" id message) checkpoint)))
+                  checkpoints))
+         (selection (completing-read "Select a checkpoint: "
+                                     (mapcar #'car formatted-checkpoints)
+                                     nil t)))
+    (cdr (assoc selection formatted-checkpoints))))
+
 (defun devon-stream-filter (proc string)
   "Process incoming data from the Devon event stream."
   (setq devon-stream-buffer (concat devon-stream-buffer string))
