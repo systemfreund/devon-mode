@@ -446,7 +446,7 @@ are fetched, a message is displayed to the user."
           (cond
            ((eq devon-events-filter 'all) t)
            ((eq devon-events-filter 'conversation)
-            (member type '("UserRequest" "UserResponse" "Checkpoint" "GitAskUser" "GitResolve" "ModelResponse" "Task" "Error" "Stop")))
+            (member type '("UserRequest" "UserResponse" "Checkpoint" "GitError" "GitAskUser" "GitResolve" "ModelResponse" "Task" "Error" "Stop")))
            (t t))))
     (when display-event
       (cond
