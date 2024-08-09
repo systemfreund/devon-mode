@@ -59,11 +59,12 @@ Possible values are:
   "Process object for the Devon event stream.")
 
 (defvar devon-checkpoint-ids nil
-  "List of checkpoint IDs encountered during the session.")
+  "List of checkpoint IDs and their timestamps encountered during the session.")
 
 (defun devon-add-checkpoint-id (id)
-  "Add a checkpoint ID to the list of encountered checkpoints."
-  (add-to-list 'devon-checkpoint-ids id t))
+  "Add a checkpoint ID and its timestamp to the list of encountered checkpoints."
+  (let ((timestamp (current-time-string)))
+    (add-to-list 'devon-checkpoint-ids (cons id timestamp) t)))
 
 ;; Keymap
 (defvar devon-mode-map
@@ -286,14 +287,15 @@ are fetched, a message is displayed to the user."
 
 (defun devon-display-event (event)
   "Display an EVENT in the Devon buffer, handling Checkpoint events specially.
-For Checkpoint events, extract the ID, add it to `devon-checkpoint-ids`,
+For Checkpoint events, extract the ID, add it to `devon-checkpoint-ids` with timestamp,
 and display it in a specific format. For all other events, display as 'type: content'."
   (let* ((type (cdr (assoc 'type event)))
          (content (cdr (assoc 'content event))))
     (if (string= type "Checkpoint")
-        (let ((checkpoint-id content))
-          (devon-add-checkpoint-id checkpoint-id)
-          (insert (format "Checkpoint: %s\n" checkpoint-id)))
+        (let* ((checkpoint-id content)
+               (_ (devon-add-checkpoint-id checkpoint-id))
+               (timestamp (cdr (assoc checkpoint-id devon-checkpoint-ids))))
+          (insert (format "Checkpoint: %s (Timestamp: %s)\n" checkpoint-id timestamp)))
       (insert (format "%s: %s\n" type content)))))
 
 (defun devon-update-buffer (events &optional append)
