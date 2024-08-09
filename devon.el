@@ -185,7 +185,9 @@ ORIG-FUN is the original function, ARGS are its arguments."
      devon-stream-process
      (format "GET %s HTTP/1.1\r\nHost: %s\r\n\r\n"
              (url-filename (url-generic-parse-url url))
-             (url-host (url-generic-parse-url devon-backend-url))))))
+             (url-host (url-generic-parse-url devon-backend-url))))
+    (setq devon-event-stream-status "active")
+    (force-mode-line-update)))
 
 (defun devon-stop-event-stream ()
   "Stop the Devon event stream and clean up associated resources."
@@ -195,6 +197,8 @@ ORIG-FUN is the original function, ARGS are its arguments."
     (setq devon-stream-process nil)
     (when (get-buffer "*devon-event-stream*")
       (kill-buffer "*devon-event-stream*"))
+    (setq devon-event-stream-status nil)
+    (force-mode-line-update)
     (message "Devon event stream stopped.")))
 
 (defvar devon-stream-buffer ""
@@ -241,9 +245,17 @@ ORIG-FUN is the original function, ARGS are its arguments."
 (defun devon-stream-sentinel (proc event)
   "Handle Devon event stream connection state changes."
   (when (string-match "\\(open\\|closed\\|connection broken by remote peer\\)" event)
-    (message "Devon event stream %s" (match-string 1 event))
-    (when (string-match "closed\\|connection broken by remote peer" event)
-      (run-with-timer 5 nil 'devon-start-event-stream))))
+    (let ((status (match-string 1 event)))
+      (setq devon-event-stream-status
+            (cond
+             ((string= status "open") "active")
+             ((string= status "closed") "closed")
+             ((string= status "connection broken by remote peer") "disconnected")
+             (t nil)))
+      (force-mode-line-update)
+      (message "Devon event stream %s" status)
+      (when (string-match "closed\\|connection broken by remote peer" event)
+        (run-with-timer 5 nil 'devon-start-event-stream)))))
 
 (defun devon-fetch-events ()
   "Fetch events from the Devon server."
