@@ -85,7 +85,12 @@ Possible values are:
   (interactive)
   (if (null devon-checkpoint-ids)
       (message "No checkpoints available.")
-    (let* ((checkpoint-options (mapcar (lambda (id) (cons (format "Checkpoint %s" id) id)) devon-checkpoint-ids))
+    (let* ((sorted-checkpoints (sort (copy-sequence devon-checkpoint-ids)
+                                     (lambda (a b) (string-greaterp (cdr a) (cdr b)))))
+           (checkpoint-options (mapcar (lambda (checkpoint)
+                                         (cons (format "Checkpoint %s (%s)" (car checkpoint) (cdr checkpoint))
+                                               (car checkpoint)))
+                                       sorted-checkpoints))
            (selected-checkpoint (completing-read "Select a checkpoint: " checkpoint-options nil t)))
       (message "Selected checkpoint: %s" (cdr (assoc selected-checkpoint checkpoint-options))))))
 
