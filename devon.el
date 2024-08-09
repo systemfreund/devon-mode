@@ -180,18 +180,24 @@ ORIG-FUN is the original function, ARGS are its arguments."
 (defun devon-stream-filter (proc string)
   "Process incoming data from the Devon event stream."
   (setq devon-stream-buffer (concat devon-stream-buffer string))
-  (message "[Devon Debug] Accumulated buffer: %s" devon-stream-buffer)
+  (message "[Devon Debug] Received data: %s" string)
   
-  (while (string-match "\\(data: \\(.+\\)\n\n\\)\\|\\(: keepalive\n\n\\)" devon-stream-buffer)
-    (let ((match (match-string 0 devon-stream-buffer)))
-      (setq devon-stream-buffer (substring devon-stream-buffer (match-end 0)))
-      
-      (if (string-prefix-p ": keepalive" match)
-          (message "[Devon Debug] Received keepalive")
-        (let* ((json-string (match-string 2 match))
-               (event (json-read-from-string json-string)))
-          (message "[Devon Debug] Parsed event: %s" event)
-          (devon-process-event event)))))
+  (let ((start 0))
+    (while (string-match "\\(data: \\(.+\\)\n\n\\)\\|\\(: keepalive\n\n\\)" devon-stream-buffer start)
+      (let ((match (match-string 0 devon-stream-buffer))
+            (match-start (match-beginning 0))
+            (match-end (match-end 0)))
+        
+        (if (string-prefix-p ": keepalive" match)
+            (message "[Devon Debug] Received keepalive")
+          (let* ((json-string (match-string 2 match))
+                 (event (json-read-from-string json-string)))
+            (message "[Devon Debug] Parsed event: %s" event)
+            (devon-process-event event)))
+        
+        (setq devon-stream-buffer (concat (substring devon-stream-buffer 0 match-start)
+                                          (substring devon-stream-buffer match-end)))
+        (setq start match-start))))
   
   (when (> (length devon-stream-buffer) 1000000)  ; Prevent buffer from growing too large
     (setq devon-stream-buffer (substring devon-stream-buffer -1000000))))
