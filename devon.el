@@ -470,7 +470,7 @@ are fetched, a message is displayed to the user."
         (setq devon-pending-git-question t)
         (let* ((message (cdr (assoc 'message content)))
                (options (cdr (assoc 'options content))))
-          (setq devon-git-options options)
+          (setq devon-git-options (mapcar #'identity options))
           (insert (format "Git: %s\nOptions: %s\n" message (mapconcat 'identity options ", ")))))
        (t
         (insert (format "%s:\n%s\n\n\n" type content)))))))
