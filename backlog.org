@@ -1,1 +1,5 @@
-* When latest event is UserResponse the devon-status is 'thinking', however when the session is 'paused the status does not show [Paused]
+* refactor devon-status-consume-event such that devon-set-status is only called once
+* include devon-status in devon-mode-line-format
+* include path in mode line (/config path)
+* include current task in mode line (/config state.task)
+* show [Devon Debug] logs not as messages but in a separate '*Devon logs*' buffer the user can inspect

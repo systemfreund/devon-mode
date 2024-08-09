@@ -25,13 +25,18 @@
   :type 'string
   :group 'devon)
 
-(defcustom devon-default-port 10000
+(defcustom devon-port 10000
   "Default port for Devon server."
   :type 'integer
   :group 'devon)
 
-(defcustom devon-default-session "devon-mode"
-  "Default devon session id."
+(defcustom devon-request-timeout 5
+  "Timeout in seconds for HTTP requests to the Devon server."
+  :type 'integer
+  :group 'devon)
+
+(defcustom devon-session-id "devon-mode"
+  "Devon session id."
   :type 'string
   :group 'devon)
 
@@ -44,14 +49,25 @@ Possible values are:
                  (const :tag "Conversation events only" conversation))
   :group 'devon)
 
-(defvar devon-port devon-default-port
-  "The port number for the Devon session.  Defaults to `devon-default-port`.")
+(defvar devon-mode-line-format
+  '(:eval
+    (concat
+     " Devon["
+     (symbol-name devon-session-state)
+     (if devon-event-stream-status
+         (format ", Stream: %s" devon-event-stream-status)
+       "")
+     "]"))
+  "Mode line format for Devon mode.")
 
-(defvar devon-session-id devon-default-session
-  "The current Devon session ID.")
+(defvar devon-status 'idle
+  "Current status of Devon: 'idle, 'thinking, or 'waiting-for-user.")
 
-(defvar devon-request-timeout 5
-  "Timeout in seconds for HTTP requests to the Devon server.")
+(defvar devon-session-state 'paused
+  "Current state of the server session: 'paused, 'running.")
+
+(defvar devon-event-stream-status nil
+  "Current status of the Devon event stream: 'active, 'closed, 'disconnected, or nil.")
 
 (defvar devon-stream-process nil
   "Process object for the Devon event stream.")
@@ -128,41 +144,6 @@ ORIG-FUN is the original function, ARGS are its arguments."
   (interactive)
   (customize-group 'devon))
 
-
-;; Ensure all functions have proper documentation strings
-(dolist (sym '(devon-conversation-history devon-status devon-port
-               devon-debug-mode devon-font-lock-keywords devon-default-port
-               devon-backend-url))
-  (when (and (boundp sym) (null (documentation-property sym 'variable-documentation)))
-    (put sym 'variable-documentation
-         (format "Devon: %s" (symbol-name sym)))))
-
-(dolist (sym '(devon-fetch-events
-               devon-send-response devon-display-event
-               devon-add-message devon-update-buffer devon-event-loop
-               devon-initialize-buffer
-               devon-toggle-debug-mode
-               devon-configure
-               devon-mode-line 
-               devon-handle-network-error 
-               devon-update-config))
-  (when (and (fboundp sym) (null (documentation sym)))
-    (put sym 'function-documentation
-         (format "Devon: Function to %s" (replace-regexp-in-string "-" " " (symbol-name sym))))))
-
-;;;###autoload
-(defun devon-clear-buffer ()
-  "Clear the Devon buffer while keeping the session active."
-  (interactive)
-  (with-current-buffer (get-buffer "*Devon*")
-    (let ((inhibit-read-only t))
-      (erase-buffer)
-      (insert "> ")
-      (goto-char (point-max)))))
-
-(defvar devon-request-timeout 5
-  "Timeout in seconds for HTTP requests to the Devon server.")
-
 (defvar devon-stream-process nil
   "Process object for the Devon event stream.")
 
@@ -186,8 +167,7 @@ ORIG-FUN is the original function, ARGS are its arguments."
      (format "GET %s HTTP/1.1\r\nHost: %s\r\n\r\n"
              (url-filename (url-generic-parse-url url))
              (url-host (url-generic-parse-url devon-backend-url))))
-    (setq devon-event-stream-status "active")
-    (force-mode-line-update)))
+    (devon-set-event-stream-status "active")))
 
 (defun devon-stop-event-stream ()
   "Stop the Devon event stream and clean up associated resources."
@@ -197,18 +177,15 @@ ORIG-FUN is the original function, ARGS are its arguments."
     (setq devon-stream-process nil)
     (when (get-buffer "*devon-event-stream*")
       (kill-buffer "*devon-event-stream*"))
-    (setq devon-event-stream-status nil)
-    (force-mode-line-update)
-    (message "Devon event stream stopped.")))
+    (devon-set-event-stream-status nil)))
 
 (defvar devon-stream-buffer ""
   "Buffer to accumulate incoming SSE data.")
 
 (defun devon-stream-filter (proc string)
   "Process incoming data from the Devon event stream."
-  (setq devon-stream-buffer (concat devon-stream-buffer string))  
-  (let ((start 0))
-    (while (string-match "\\(data: \\(.+\\)\n\n\\)\\|\\(: keepalive\n\n\\)" devon-stream-buffer)
+  (setq devon-stream-buffer (concat devon-stream-buffer string))
+  (while (string-match "\\(data: \\(.+\\)\n\n\\)\\|\\(: keepalive\n\n\\)" devon-stream-buffer)
       (let ((match (match-string 0 devon-stream-buffer))
             (match-start (match-beginning 0))
             (match-end (match-end 0)))
@@ -221,23 +198,47 @@ ORIG-FUN is the original function, ARGS are its arguments."
             (let ((event (json-read-from-string json-string)))
               (devon-process-event event))))
         
-        (setq devon-stream-buffer (substring devon-stream-buffer match-end))))))
+        (setq devon-stream-buffer (substring devon-stream-buffer match-end)))))
 
-(defun devon-update-status-from-event (event)
+(defun devon-modeline-update ()
+  "Update the mode line to reflect the current Devon status."
+  (force-mode-line-update))
+
+(defun devon-set-status (new-status)
+  "Set the Devon status and update the mode line."
+  (setq devon-status new-status)
+  (message "Devon status changed to: %s" new-status)
+  (devon-modeline-update))
+
+(defun devon-set-session-state (new-state)
+  "Set the Devon session state and update the mode line."
+  (setq devon-session-state new-state)
+  (message "Devon session state changed to: %s" new-state)
+  (devon-modeline-update))
+
+(defun devon-set-event-stream-status (new-status)
+  "Set the Devon event stream status and update the mode line."
+  (setq devon-event-stream-status new-status)
+  (message "Devon event stream status changed to: %s" new-status)
+  (devon-modeline-update))
+
+(defun devon-status-consume-event (event)
   "Update devon-status based on the event type."
-  (let ((type (cdr (assoc 'type event))))
+  (let ((type (cdr (assoc 'type event)))
+        (new-status nil))
     (cond
      ((string= type "ModelRequest")
-      (setq devon-status 'thinking))
+      (setq new-status 'thinking))
      ((string= type "UserRequest")
-      (setq devon-status 'waiting-for-user))
+      (setq new-status 'waiting-for-user))
      ((string= type "Stop")
-      (setq devon-status 'stopped)))
-    (devon-update-status)))
+      (setq new-status 'stopped)))
+    (when new-status
+      (devon-set-status new-status))))
 
 (defun devon-process-event (event)
   "Process a single event from the Devon event stream."
-  (devon-update-status-from-event event)
+  (devon-status-consume-event event)
   (when (string= (cdr (assoc 'type event)) "Stop")
     (message "Devon has left the chat."))
   (devon-update-buffer (list event) t))
@@ -246,13 +247,12 @@ ORIG-FUN is the original function, ARGS are its arguments."
   "Handle Devon event stream connection state changes."
   (when (string-match "\\(open\\|closed\\|connection broken by remote peer\\)" event)
     (let ((status (match-string 1 event)))
-      (setq devon-event-stream-status
-            (cond
-             ((string= status "open") "active")
-             ((string= status "closed") "closed")
-             ((string= status "connection broken by remote peer") "disconnected")
-             (t nil)))
-      (force-mode-line-update)
+      (devon-set-event-stream-status
+       (cond
+        ((string= status "open") "active")
+        ((string= status "closed") "closed")
+        ((string= status "connection broken by remote peer") "disconnected")
+        (t nil)))
       (message "Devon event stream %s" status)
       (when (string-match "closed\\|connection broken by remote peer" event)
         (run-with-timer 5 nil 'devon-start-event-stream)))))
@@ -291,7 +291,7 @@ are fetched, a message is displayed to the user."
         (progn
           (devon-update-buffer events)
           (when-let ((last-event (car (last events))))
-            (devon-update-status-from-event last-event)))
+            (devon-status-consume-event last-event)))
           (devon-update-buffer events)
           (message "Devon buffer updated with new events."))
       (message "No new events to display.")))
@@ -315,8 +315,7 @@ are fetched, a message is displayed to the user."
 (defun devon-start-session ()
   "Start the Devon session and update the session state."
   (interactive)
-  (setq devon-session-state 'running)
-  (devon-update-status)
+  (devon-set-session-state 'running)
   (let ((url-request-method "PATCH")
         (url (format "%s:%d/sessions/%s/start" devon-backend-url devon-port devon-session-id)))
     (with-current-buffer (url-retrieve-synchronously url)
@@ -433,66 +432,20 @@ FILTER can be 'all, 'conversation, or 'no-environment."
   :type 'integer
   :group 'devon)
 
-(defun devon-mode-line ()
-  "Return the mode line format for Devon mode."
-  (let ((status (devon-status-indicator)))
-    (list
-     " Devon: "
-     (propertize status 'face
-                         (cond
-                          ((string= status "Idle") 'success)
-                          ((string= status "Thinking...") 'warning)
-                          ((string= status "Waiting for input") 'font-lock-keyword-face)
-                          (t 'error)))
-     )))
-
-;; Add documentation strings to all functions and variables
-(dolist (sym '(devon-status devon-port devon-session-id
-               devon-debug-mode devon-font-lock-keywords devon-default-port))
-  (when (and (boundp sym) (null (documentation-property sym 'variable-documentation)))
-    (put sym 'variable-documentation
-         (format "Devon: %s" (symbol-name sym)))))
-
 ;;;###autoload
 (define-derived-mode devon-mode special-mode "Devon"
   "Major mode for Devon Emacs extension."
   :group 'devon
   (setq font-lock-defaults '(devon-font-lock-keywords))
   (font-lock-mode 1)
-  (setq-local mode-line-format (append mode-line-format '((:eval (devon-mode-line))))))
-
-(provide 'devon)
-
-;;; devon.el ends here
-
-(defvar devon-status 'idle
-  "Current status of Devon: 'idle, 'thinking, or 'waiting-for-user.")
-
-(defvar devon-session-state 'paused
-  "Current state of the server session: 'paused, 'running.")
-
-(defun devon-update-status ()
-  "Update the mode line to reflect the current Devon status."
-  (force-mode-line-update))
-
-(defun devon-status-indicator ()
-  "Return a string indicating the current Devon status and session state."
-  (let ((status-str (pcase devon-status
-                      ('idle "Idle")
-                      ('thinking "Thinking...")
-                      ('waiting-for-user "Waiting for input")
-                      (_ "Devon: Unknown status"))))
-    (if (eq devon-session-state 'paused)
-        (concat "[Paused] " status-str)
-      status-str)))
+  (setq-local mode-line-format (list "" mode-line-format devon-mode-line-format)))
 
 (defun devon-handle-user-input ()
   "Handle user input and send responses to the Devon session."
   (interactive)
   (let ((input (read-string "To Devon> ")))
     (devon-send-response input)
-    (setq devon-status 'thinking)
-    (devon-update-status)))
+    (devon-set-status 'thinking)))
 
 (defun devon-initialize-buffer (&optional skip-event-loop)
   "Initialize the Devon buffer and optionally start the event loop with PORT.
