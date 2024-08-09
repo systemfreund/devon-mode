@@ -203,7 +203,8 @@ ORIG-FUN is the original function, ARGS are its arguments."
     config))
 
 (defun devon-select-checkpoint ()
-  "Let the user select a checkpoint from the current session configuration."
+  "Let the user select a checkpoint from the current session configuration.
+Returns the checkpoint_id of the selected checkpoint."
   (interactive)
   (let* ((config (devon-fetch-config))
          (checkpoints (cdr (assoc 'checkpoints config)))
@@ -211,7 +212,7 @@ ORIG-FUN is the original function, ARGS are its arguments."
           (mapcar (lambda (checkpoint)
                     (let ((id (cdr (assoc 'checkpoint_id checkpoint)))
                           (message (cdr (assoc 'commit_message checkpoint))))
-                      (cons (format "%s: %s" id message) checkpoint)))
+                      (cons (format "%s: %s" id message) id)))
                   (reverse checkpoints)))
          (selection (completing-read "Select a checkpoint: "
                                      (mapcar #'car formatted-checkpoints)
