@@ -341,7 +341,7 @@ are fetched, a message is displayed to the user."
          (url-request-data
           (json-encode
            `(
-             ("model" . "claude-3-5-sonnet")             
+             ("model" . "claude-3-haiku")             
              ("versioning_type" . ,(or devon-versioning-type "none"))
              )))
          (response-buffer (url-retrieve-synchronously url)))
