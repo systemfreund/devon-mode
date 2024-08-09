@@ -306,11 +306,11 @@ Respects the `devon-events-filter` setting."
            ((eq devon-events-filter 'no-environment)
             (not (member type '("EnvironmentUpdate" "EnvironmentQuery"))))
            (t t))))
+    (when (string= type "Checkpoint")
+      (devon-add-checkpoint-id content))
     (when display-event
       (if (string= type "Checkpoint")
-          (let ((checkpoint-id content))
-            (devon-add-checkpoint-id checkpoint-id)
-            (insert (format "Checkpoint: %s\n" checkpoint-id)))
+          (insert (format "Checkpoint: %s\n" content))
         (insert (format "%s: %s\n" type content))))))
 
 (defun devon-update-buffer (events &optional append)
