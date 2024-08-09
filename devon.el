@@ -61,6 +61,13 @@ Possible values are:
 (defvar devon-stream-process nil
   "Process object for the Devon event stream.")
 
+(defvar devon-checkpoint-ids nil
+  "List of checkpoint IDs encountered during the session.")
+
+(defun devon-add-checkpoint-id (id)
+  "Add a checkpoint ID to the list of encountered checkpoints."
+  (add-to-list 'devon-checkpoint-ids id t))
+
 ;; Keymap
 (defvar devon-mode-map
   (let ((map (make-sparse-keymap)))
@@ -73,8 +80,18 @@ Possible values are:
     (define-key map (kbd "C-c C-s r") 'devon-reset-session)
     (define-key map (kbd "C-c C-s c") 'devon-create-session)
     (define-key map (kbd "C-c C-s s") 'devon-start-session)
+    (define-key map (kbd "C-c d p") 'devon-select-checkpoint)
     map)
   "Keymap for Devon mode.")
+
+(defun devon-select-checkpoint ()
+  "Interactively select a checkpoint from the list of encountered checkpoints."
+  (interactive)
+  (if (null devon-checkpoint-ids)
+      (message "No checkpoints available.")
+    (let* ((checkpoint-options (mapcar (lambda (id) (cons (format "Checkpoint %s" id) id)) devon-checkpoint-ids))
+           (selected-checkpoint (completing-read "Select a checkpoint: " checkpoint-options nil t)))
+      (message "Selected checkpoint: %s" (cdr (assoc selected-checkpoint checkpoint-options))))))
 
 (defun devon-handle-network-error (error-symbol data)
   "Handle network errors in Devon operations.
@@ -381,8 +398,11 @@ are fetched, a message is displayed to the user."
      (insert (propertize "Interrupt: " 'face '(:foreground "orange" :weight bold)))
      (insert (propertize (format "%s\n" content) 'face '(:foreground "orange"))))
     ((string= type "Checkpoint")
-     (insert (propertize "Checkpoint: " 'face '(:foreground "purple" :weight bold :background "light yellow")))
-     (insert (propertize (format "%s\n" content) 'face '(:foreground "purple" :background "light yellow"))))
+     (let ((checkpoint-id (cdr (assoc 'id content))))
+       (when checkpoint-id
+         (devon-add-checkpoint-id checkpoint-id))
+       (insert (propertize "Checkpoint: " 'face '(:foreground "purple" :weight bold :background "light yellow")))
+       (insert (propertize (format "%s\n" (or checkpoint-id content)) 'face '(:foreground "purple" :background "light yellow")))))
     (t (insert (format "%s: %s\n" type content))))
       (insert "\n\n\n")))) ; Add 3 lines of margin at the bottom
 (defun devon-update-buffer (events &optional append)
