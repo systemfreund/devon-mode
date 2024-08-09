@@ -285,9 +285,10 @@ are fetched, a message is displayed to the user."
         response))))
 
 (defun devon-display-event (event)
-  "Display an EVENT in the Devon buffer."
+  "Display an EVENT in the Devon buffer in a plain format."
   (let* ((type (cdr (assoc 'type event)))
          (content (cdr (assoc 'content event))))
+    (insert (format "%s: %s\n" type content))))
               (string= type "Checkpoint"))
       (with-current-buffer (get-buffer-create "*Devon*")
         (let ((inhibit-read-only t))
