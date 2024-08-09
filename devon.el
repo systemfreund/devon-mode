@@ -176,6 +176,7 @@ ORIG-FUN is the original function, ARGS are its arguments."
 
 (defun devon-stream-filter (proc string)
   "Process incoming data from the Devon event stream."
+  (message "[Devon Debug] Received string: %s" string)
   (when (string-match "data: \\(.+\\)\n" string)
     (let* ((json-string (match-string 1 string))
            (event (json-read-from-string json-string)))
