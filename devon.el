@@ -347,7 +347,7 @@ are fetched, a message is displayed to the user."
          (url-request-data
           (json-encode
            `(
-             ("model" . devon-default-model)
+             ("model" . ,devon-default-model)
              ("versioning_type" . ,(or devon-versioning-type "none"))
              )))
          (response-buffer (url-retrieve-synchronously url)))
