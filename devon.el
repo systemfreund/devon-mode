@@ -380,6 +380,9 @@ are fetched, a message is displayed to the user."
     ((string= type "Interrupt")
      (insert (propertize "Interrupt: " 'face '(:foreground "orange" :weight bold)))
      (insert (propertize (format "%s\n" content) 'face '(:foreground "orange"))))
+    ((string= type "Checkpoint")
+     (insert (propertize "Checkpoint: " 'face '(:foreground "purple" :weight bold :background "light yellow")))
+     (insert (propertize (format "%s\n" content) 'face '(:foreground "purple" :background "light yellow"))))
     (t (insert (format "%s: %s\n" type content))))
       (insert "\n\n\n")))) ; Add 3 lines of margin at the bottom
 (defun devon-update-buffer (events &optional append)
