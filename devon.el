@@ -74,9 +74,21 @@ Possible values are:
     (define-key map (kbd "C-c C-s r") 'devon-reset-session)
     (define-key map (kbd "C-c C-s c") 'devon-create-session)
     (define-key map (kbd "C-c C-s s") 'devon-start-session)
+    (define-key map (kbd "C-c C-s e") 'devon-stop-event-stream)
     (define-key map (kbd "C-c d p") 'devon-select-checkpoint)
     map)
-  "Keymap for Devon mode.")
+  "Keymap for Devon mode.
+\\{devon-mode-map}
+
+\\[devon-handle-user-input] - Handle user input
+\\[devon-update-config] - Update Devon configuration
+\\[devon-clear-buffer] - Clear Devon buffer
+\\[devon-fetch-and-display-events] - Fetch and display events
+\\[devon-reset-session] - Reset Devon session
+\\[devon-create-session] - Create a new Devon session
+\\[devon-start-session] - Start Devon session
+\\[devon-stop-event-stream] - Stop Devon event stream
+\\[devon-select-checkpoint] - Select a checkpoint")
 
 (defun devon-select-checkpoint ()
   "Interactively select a checkpoint from the list of encountered checkpoints."
@@ -173,6 +185,16 @@ ORIG-FUN is the original function, ARGS are its arguments."
      (format "GET %s HTTP/1.1\r\nHost: %s\r\n\r\n"
              (url-filename (url-generic-parse-url url))
              (url-host (url-generic-parse-url devon-backend-url))))))
+
+(defun devon-stop-event-stream ()
+  "Stop the Devon event stream and clean up associated resources."
+  (interactive)
+  (when devon-stream-process
+    (delete-process devon-stream-process)
+    (setq devon-stream-process nil)
+    (when (get-buffer "*devon-event-stream*")
+      (kill-buffer "*devon-event-stream*"))
+    (message "Devon event stream stopped.")))
 
 (defvar devon-stream-buffer ""
   "Buffer to accumulate incoming SSE data.")
