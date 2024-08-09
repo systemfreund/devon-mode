@@ -365,6 +365,22 @@ are fetched, a message is displayed to the user."
                    (or (string= type "UserResponse")
                        (string= type "UserRequest")
                        (string= type "Task")))
+              (string= type "Checkpoint"))
+      (with-current-buffer (get-buffer-create "*Devon*")
+        (let ((inhibit-read-only t))
+          (goto-char (point-max))
+          (cond
+           ((string= type "Checkpoint")
+            (let ((checkpoint-id (cdr (assoc 'id content))))
+              (insert (propertize (format "Checkpoint: %s\n" checkpoint-id)
+                                  'face '(:foreground "purple" :background "light yellow")))
+              (devon-add-checkpoint-id checkpoint-id)))
+           (t
+            (insert (propertize (format "%s: " type) 'face face))
+            (insert (format "%s\n" content))))
+          (goto-char (point-max))
+          (when devon-auto-scroll
+            (recenter -1)))))))
               (and (eq devon-events-filter 'no-environment)
                    (not (or (string= type "EnvironmentRequest")
                             (string= type "EnvironmentResponse")))))
