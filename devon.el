@@ -291,7 +291,7 @@ and display it in a specific format. For all other events, display as 'type: con
   (let* ((type (cdr (assoc 'type event)))
          (content (cdr (assoc 'content event))))
     (if (string= type "Checkpoint")
-        (let ((checkpoint-id (cdr (assoc 'id content))))
+        (let ((checkpoint-id content))
           (devon-add-checkpoint-id checkpoint-id)
           (insert (format "Checkpoint: %s\n" checkpoint-id)))
       (insert (format "%s: %s\n" type content)))))

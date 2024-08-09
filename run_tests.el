@@ -1,5 +1,0 @@
-(add-to-list 'load-path ".")
-(require 'ert)
-(load-file "devon.el")
-(load-file "devon-tests.el")
-(ert-run-tests-batch-and-exit)
