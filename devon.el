@@ -165,6 +165,24 @@ ORIG-FUN is the original function, ARGS are its arguments."
 (defvar devon-stream-buffer ""
   "Buffer to accumulate incoming SSE data.")
 
+(defvar devon-update-timer nil
+  "Timer object for updating Devon session state.")
+
+(defun devon-start-update-timer ()
+  "Start the timer to update Devon session state every 5 seconds."
+  (when (and (get-buffer "*Devon*")
+             (not devon-update-timer)
+             (fboundp 'devon-update-session-state))
+    (setq devon-update-timer
+          (run-with-timer 0 5 #'devon-update-session-state))))
+
+(defun devon-stop-update-timer ()
+  "Stop the Devon update timer."
+  (when devon-update-timer
+    (cancel-timer devon-update-timer)
+    (setq devon-update-timer nil)))
+
+
 (defun devon-stream-filter (proc string)
   "Process incoming data from the Devon event stream."
   (setq devon-stream-buffer (concat devon-stream-buffer string))
@@ -298,14 +316,33 @@ are fetched, a message is displayed to the user."
 (defun devon-start-session ()
   "Start the Devon session and update the session state."
   (interactive)
-  (devon-set-session-state 'running)
   (let ((url-request-method "PATCH")
         (url (format "%s:%d/sessions/%s/start" devon-backend-url devon-port devon-session-id)))
     (with-current-buffer (url-retrieve-synchronously url)
       (goto-char url-http-end-of-headers)
       (let ((response (json-read)))
         (devon-log "Devon session started")
+        (devon-update-session-state)
+        (devon-start-update-timer)
         response))))
+
+(defun devon-update-session-state ()
+  "Get the Devon session state from server and update locally."
+  (interactive)
+  (when (get-buffer "*Devon*")
+    (condition-case err
+        (let ((url-request-method "GET")
+              (url (format "%s:%d/sessions/%s/status" devon-backend-url devon-port devon-session-id)))
+          (with-current-buffer (url-retrieve-synchronously url nil t devon-request-timeout)
+            (if (>= url-http-response-status 400)
+                (error "HTTP error: %s" url-http-response-status)
+              (goto-char url-http-end-of-headers)
+              (let ((response (json-read)))
+                (devon-set-session-state response)
+                response))))
+      (error
+       (devon-log "Error updating session state: %s" (error-message-string err))
+       (devon-set-session-state 'error)))))
 
 (defcustom devon-versioning-type 'none
   "Versioning type"
