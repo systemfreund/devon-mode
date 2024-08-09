@@ -250,6 +250,18 @@ are fetched, a message is displayed to the user."
     (if events
         (progn
           (devon-update-buffer events)
+          (let ((last-event (car (last events))))
+            (when last-event
+              (let ((type (cdr (assoc 'type last-event))))
+                (cond
+                 ((string= type "ModelRequest")
+                  (setq devon-status 'thinking))
+                 ((string= type "UserRequest")
+                  (setq devon-status 'waiting-for-user))
+                 ((string= type "Stop")
+                  (setq devon-status 'stopped)))
+                (devon-update-status)))))
+          (devon-update-buffer events)
           (message "Devon buffer updated with new events."))
       (message "No new events to display."))))
 
