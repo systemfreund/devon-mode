@@ -302,7 +302,7 @@ Respects the `devon-events-filter` setting."
           (cond
            ((eq devon-events-filter 'all) t)
            ((eq devon-events-filter 'conversation)
-            (member type '("UserRequest" "Checkpoint")))
+            (member type '("UserRequest" "UserResponse" "Checkpoint")))
            ((eq devon-events-filter 'no-environment)
             (not (member type '("EnvironmentUpdate" "EnvironmentQuery"))))
            (t t))))
