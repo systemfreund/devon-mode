@@ -399,26 +399,10 @@ are fetched, a message is displayed to the user."
   (let* ((type (cdr (assoc 'type event)))
          (content (cdr (assoc 'content event)))
          (display-event
-          (lambda ()
-            (devon-insert-event event)
-            (devon-update-last-event-marker))))
-    (cond
-     ((eq devon-events-filter 'all)
-      (funcall display-event))
-     ((eq devon-events-filter 'conversation)
-      (when (or (string= type "Human")
-                (string= type "Assistant")
-                (string= type "Task"))  ; Include 'Task' events for 'conversation' filter
-        (funcall display-event)))
-     ((eq devon-events-filter 'assistant)
-      (when (string= type "Assistant")
-        (funcall display-event)))
-     (t (error "Invalid devon-events-filter value: %s" devon-events-filter)))))
-         (display-event
           (cond
            ((eq devon-events-filter 'all) t)
            ((eq devon-events-filter 'conversation)
-            (member type '("UserRequest" "UserResponse" "Checkpoint" "GitAskUser" "GitResolve" "ModelResponse")))
+            (member type '("UserRequest" "UserResponse" "Checkpoint" "GitAskUser" "GitResolve" "ModelResponse" "Task" "Error" "Stop")))
            (t t))))
     (when display-event
       (cond
