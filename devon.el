@@ -54,6 +54,7 @@ Possible values are:
     (concat
      " Devon["
      (symbol-name devon-session-state)
+     (format ", Status: %s" (symbol-name devon-status))
      (if devon-event-stream-status
          (format ", Stream: %s" devon-event-stream-status)
        "")
