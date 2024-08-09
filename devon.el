@@ -512,11 +512,11 @@ If SKIP-EVENT-LOOP is non-nil, don't start the event loop (useful for testing)."
       (let ((inhibit-read-only t))
         (erase-buffer)
         (devon-fetch-and-display-events))
-      (setq buffer-read-only nil))  ; Ensure the buffer is writable
+      (setq buffer-read-only nil)
+      (add-hook 'kill-buffer-hook #'devon-stop-event-stream nil t))
     (switch-to-buffer buffer))
   (unless skip-event-loop
-    (devon-start-event-stream))
-  )
+    (devon-start-event-stream)))
 
 (provide 'devon)
 
