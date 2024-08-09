@@ -380,11 +380,7 @@ are fetched, a message is displayed to the user."
      ("consumer" . "devon"))))
 
 (defun devon-display-event (event)
-  "Display an EVENT in the Devon buffer, handling Checkpoint events specially.
-For Checkpoint events, extract the ID, add it to `devon-checkpoint-ids` with timestamp,
-but display only the ID. For UserResponse and UserRequest, use 'Human:' and 'Devon:' labels respectively.
-For ModelResponse, display thought and action separately.
-For all other events, display as 'type:\ncontent'. Respects the `devon-events-filter` setting."
+  "Display an EVENT in the Devon buffer. Respects the `devon-events-filter` setting."
   (let* ((type (cdr (assoc 'type event)))
          (content (cdr (assoc 'content event)))
          (display-event
@@ -398,17 +394,21 @@ For all other events, display as 'type:\ncontent'. Respects the `devon-events-fi
     (when display-event
       (cond
        ((string= type "Checkpoint")
-        (insert (format "Checkpoint:\n%s\n\n\n" content)))
+        (insert (format "Checkpoint: %s\n\n" content)))
        ((string= type "UserResponse")
         (insert (format "Human:\n%s\n\n\n" content)))
        ((string= type "UserRequest")
         (insert (format "Devon:\n%s\n\n\n" content)))
        ((string= type "ModelResponse")
-        (let ((thought (cdr (assoc 'thought content)))
-              (action (cdr (assoc 'action content))))
-          (insert (format "Devon (Thought): %s\n" thought))
+        (let* ((body (with-temp-buffer
+                       (insert content)
+                       (goto-char (point-min))
+                       (json-read)))
+              (thought (cdr (assoc 'thought body)))
+              (action (cdr (assoc 'action body))))
+          (insert (format "Devon (Thought):\n%s\n\n\n" thought))
           (when action
-            (insert (format "Devon (Action): %s\n" action)))))
+            (insert (format "Devon (Action):\n%s\n\n\n" action)))))
        (t
         (insert (format "%s:\n%s\n\n\n" type content)))))))
 

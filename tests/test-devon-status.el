@@ -53,7 +53,7 @@
       (devon-display-event '((type . "GitResolve") (content . "Git resolution")))
       (should (string-match-p "GitResolve:" (buffer-string)))
       (erase-buffer)
-      (devon-display-event '((type . "ModelResponse") (content . ((thought . "Test thought") (action . "Test action")))))
+      (devon-display-event '((type . "ModelResponse") (content . "{\"thought\":\"Test thought\",\"action\":\"Test action\"}")))
       (should (string-match-p "Devon (Thought): Test thought" (buffer-string)))
       (should (string-match-p "Devon (Action): Test action" (buffer-string)))
       (erase-buffer)
