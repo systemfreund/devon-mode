@@ -39,6 +39,19 @@
       
       (should (member "test-checkpoint-456" devon-checkpoint-ids))
       
+      ;; Test with invalid content (neither string nor JSON object with 'id')
+      (erase-buffer)
+      (devon-display-event '((type . "Checkpoint") (content . ((not-id . "invalid")))))
+      
+      (goto-char (point-min))
+      (should (search-forward "Checkpoint: Unknown" nil t))
+      
+      (let ((checkpoint-face (get-text-property (point) 'face)))
+        (should (equal (plist-get checkpoint-face :foreground) "purple"))
+        (should (equal (plist-get checkpoint-face :background) "light yellow")))
+      
+      (should (member "Unknown" devon-checkpoint-ids))
+      
       ;; Check if the checkpoint is displayed differently from other events
       (erase-buffer)
       (devon-display-event '((type . "OtherEvent") (content . "Some other event")))
@@ -46,9 +59,10 @@
       (should-not (search-forward "Checkpoint:" nil t))
       
       ;; Check if multiple checkpoints are handled correctly
-      (should (= (length devon-checkpoint-ids) 2))
+      (should (= (length devon-checkpoint-ids) 3))
       (should (member "test-checkpoint-123" devon-checkpoint-ids))
-      (should (member "test-checkpoint-456" devon-checkpoint-ids)))
+      (should (member "test-checkpoint-456" devon-checkpoint-ids))
+      (should (member "Unknown" devon-checkpoint-ids)))
     
     (kill-buffer test-buffer)))
 
