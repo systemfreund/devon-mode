@@ -189,10 +189,12 @@ ORIG-FUN is the original function, ARGS are its arguments."
   (let* ((url (format "%s:%d/sessions/%s/config" devon-backend-url devon-port devon-session-id))
          (url-request-method "GET")
          (url-request-extra-headers '(("Content-Type" . "application/json")))
-         (response-buffer (url-retrieve-synchronously url nil nil devon-request-timeout))
+         (buffer (with-timeout (devon-request-timeout
+                                (error "Request timed out"))
+                   (url-retrieve-synchronously url t)))
          config)
-    (if response-buffer
-        (with-current-buffer response-buffer
+    (if buffer
+        (with-current-buffer buffer
           (goto-char (point-min))
           (re-search-forward "^$")
           (setq config (json-read))
@@ -278,6 +280,7 @@ ORIG-FUN is the original function, ARGS are its arguments."
       (devon-log "Devon event stream %s" status)
       (when (string-match "closed\\|connection broken by remote peer" event)
         (run-with-timer 5 nil 'devon-start-event-stream)))))
+
 (defun devon-fetch-events ()
   "Fetch events from the Devon server."
   (let* ((url (format "%s:%d/sessions/%s/events" devon-backend-url devon-port devon-session-id))
