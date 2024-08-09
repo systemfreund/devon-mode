@@ -470,7 +470,8 @@ are fetched, a message is displayed to the user."
         (setq devon-pending-git-question t)
         (let* ((message (cdr (assoc 'message content)))
                (options (cdr (assoc 'options content))))
-          (insert (format "Git: %s\n" message))))
+          (setq devon-git-options options)
+          (insert (format "Git: %s\nOptions: %s\n" message (mapconcat 'identity options ", ")))))
        (t
         (insert (format "%s:\n%s\n\n\n" type content)))))))
 
@@ -551,13 +552,17 @@ FILTER can be 'all, 'conversation, or 'no-environment."
 (defvar devon-pending-git-question nil
   "Stores the pending Git question if there is one.")
 
+(defvar devon-git-options nil
+  "Stores the options for the pending Git question.")
+
 (defun devon-handle-user-input ()
   "Handle user input and send responses to the Devon session."
   (interactive)
   (if devon-pending-git-question
-      (let ((input (read-string "Git Response> ")))
+      (let ((input (completing-read "Git Response> " devon-git-options nil t)))
         (devon-git-resolve input)
         (setq devon-pending-git-question nil)
+        (setq devon-git-options nil)
         (devon-set-status 'thinking))
     (let ((input (read-string "To Devon> ")))
       (devon-send-response input)
