@@ -168,6 +168,7 @@ ORIG-FUN is the original function, ARGS are its arguments."
 
 (defun devon-start-event-stream ()
   "Start streaming events from the Devon server."
+  (interactive)
   (when devon-stream-process
     (delete-process devon-stream-process))
   (let ((url (format "%s:%d/sessions/%s/events/stream" devon-backend-url devon-port devon-session-id)))
@@ -203,7 +204,7 @@ ORIG-FUN is the original function, ARGS are its arguments."
   "Process incoming data from the Devon event stream."
   (setq devon-stream-buffer (concat devon-stream-buffer string))  
   (let ((start 0))
-    (while (string-match "\\(data: \\(.+\\)\n\n\\)\\|\\(: keepalive\n\n\\)" devon-stream-buffer start)
+    (while (string-match "\\(data: \\(.+\\)\n\n\\)\\|\\(: keepalive\n\n\\)" devon-stream-buffer)
       (let ((match (match-string 0 devon-stream-buffer))
             (match-start (match-beginning 0))
             (match-end (match-end 0)))
@@ -216,12 +217,7 @@ ORIG-FUN is the original function, ARGS are its arguments."
             (let ((event (json-read-from-string json-string)))
               (devon-process-event event))))
         
-        (setq devon-stream-buffer (substring devon-stream-buffer match-end))
-        (setq start match-start))))
-  
-  (when (> (length devon-stream-buffer) 1000000)  ; Prevent buffer from growing too large
-    (setq devon-stream-buffer (substring devon-stream-buffer -1000000))
-    (message "[Devon Debug] Buffer truncated. New length: %d" (length devon-stream-buffer))))
+        (setq devon-stream-buffer (substring devon-stream-buffer match-end))))))
 
 (defun devon-update-status-from-event (event)
   "Update devon-status based on the event type."
