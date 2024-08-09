@@ -352,6 +352,28 @@ are fetched, a message is displayed to the user."
         (devon-initialize-buffer)
         response))))
 
+(defun devon-send-event (event)
+  "Send an event to Devon"
+  (let* ((url-request-method "POST")
+         (url (format "%s:%d/sessions/%s/event" devon-backend-url devon-port devon-session-id))
+         (url-request-extra-headers '(("Content-Type" . "application/json")))
+         (url-request-data (json-encode event))
+         (response-buffer (url-retrieve-synchronously url)))
+    (with-current-buffer response-buffer
+      (goto-char url-http-end-of-headers)
+      (let ((response (json-read)))
+        (message "Event sent to Devon session %s: %s" devon-session-id response)        
+        response))))
+
+(defun devon-git-resolve (answer &optional)
+  (interactive "MAnswer: ")
+  (devon-send-event
+   `(
+     ("type" . "GitResolve")
+     ("content" . (("action" . ,answer)))
+     ("producer" . "human")
+     ("consumer" . "devon"))))
+
 (defun devon-display-event (event)
   "Display an EVENT in the Devon buffer, handling Checkpoint events specially.
 For Checkpoint events, extract the ID, add it to `devon-checkpoint-ids` with timestamp,
