@@ -52,9 +52,6 @@ Possible values are:
 (defvar devon-session-id devon-default-session
   "The current Devon session ID.")
 
-(defvar devon-auto-scroll t
-  "Whether to automatically scroll the Devon buffer.")
-
 (defvar devon-request-timeout 5
   "Timeout in seconds for HTTP requests to the Devon server.")
 
@@ -76,7 +73,6 @@ Possible values are:
     (define-key map (kbd "C-c d s") 'devon-print-session-state)
     (define-key map (kbd "C-c d c") 'devon-clear-buffer)
     (define-key map (kbd "C-c d r") 'devon-fetch-and-display-events)
-    (define-key map (kbd "C-c d a") 'devon-toggle-auto-scroll)
     (define-key map (kbd "C-c C-s r") 'devon-reset-session)
     (define-key map (kbd "C-c C-s c") 'devon-create-session)
     (define-key map (kbd "C-c C-s s") 'devon-start-session)
@@ -198,16 +194,6 @@ ORIG-FUN is the original function, ARGS are its arguments."
       (erase-buffer)
       (insert "> ")
       (goto-char (point-max)))))
-
-;;;###autoload
-(defun devon-toggle-auto-scroll ()
-  "Toggle automatic scrolling in the Devon buffer."
-  (interactive)
-  (setq devon-auto-scroll (not devon-auto-scroll))
-  (message "Devon auto-scroll %s" (if devon-auto-scroll "enabled" "disabled")))
-
-(defvar devon-auto-scroll t
-  "Whether to automatically scroll the Devon buffer.")
 
 (defvar devon-request-timeout 5
   "Timeout in seconds for HTTP requests to the Devon server.")

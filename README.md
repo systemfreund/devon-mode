@@ -67,7 +67,6 @@ Here are some of the most commonly used Devon commands:
 - `C-c d u`: Update Devon configuration
 - `C-c d g`: Generate usage report
 - `C-c d C`: Clear the Devon buffer
-- `C-c d a`: Toggle auto-scroll
 - `C-c d E`: Export conversation to Markdown
 
 ## Customization
