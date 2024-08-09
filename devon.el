@@ -39,11 +39,9 @@
   "Filter for Devon events.
 Possible values are:
 'all - Show all events
-'conversation - Show only conversation events
-'no-environment - Show all events except environment-related ones"
+'conversation - Show only conversation events"
   :type '(choice (const :tag "All events" all)
-                 (const :tag "Conversation events only" conversation)
-                 (const :tag "All except environment events" no-environment))
+                 (const :tag "Conversation events only" conversation))
   :group 'devon)
 
 (defvar devon-port devon-default-port
@@ -303,8 +301,6 @@ For all other events, display as 'type:\ncontent'. Respects the `devon-events-fi
            ((eq devon-events-filter 'all) t)
            ((eq devon-events-filter 'conversation)
             (member type '("UserRequest" "UserResponse" "Checkpoint")))
-           ((eq devon-events-filter 'no-environment)
-            (not (member type '("EnvironmentUpdate" "EnvironmentQuery"))))
            (t t))))
     (when (string= type "Checkpoint")
       (devon-add-checkpoint-id content))
