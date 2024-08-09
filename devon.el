@@ -52,7 +52,8 @@ Possible values are:
 (defcustom devon-default-model "claude-3-5-sonnet"
   "The LLM Devon should use."
   :type '(choice (const :tag "claude-3-5-sonnet" "claude-3-5-sonnet")
-                 (const :tag "claude-3-haiku" "claude-3-haiku"))
+                 (const :tag "claude-3-haiku" "claude-3-haiku")
+                 (const :tag "ollama/deepseek-coder:6.7b" "ollama/deepseek-coder:6.7b"))
   :group 'devon)
 
 (defvar devon-mode-line-format
