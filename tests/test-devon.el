@@ -26,7 +26,19 @@
         (should (equal (plist-get checkpoint-face :background) "light yellow")))
       
       ;; Check if the checkpoint ID was added to devon-checkpoint-ids
-      (should (member "test-checkpoint-123" devon-checkpoint-ids)))
+      (should (member "test-checkpoint-123" devon-checkpoint-ids))
+      
+      ;; Check if the checkpoint is displayed differently from other events
+      (erase-buffer)
+      (devon-display-event '((type . "OtherEvent") (content . "Some other event")))
+      (goto-char (point-min))
+      (should-not (search-forward "Checkpoint:" nil t))
+      
+      ;; Check if multiple checkpoints are handled correctly
+      (erase-buffer)
+      (devon-display-event '((type . "Checkpoint") (content . ((id . "test-checkpoint-456")))))
+      (should (= (length devon-checkpoint-ids) 2))
+      (should (member "test-checkpoint-456" devon-checkpoint-ids)))
     
     (kill-buffer test-buffer)))
 

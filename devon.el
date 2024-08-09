@@ -285,10 +285,16 @@ are fetched, a message is displayed to the user."
         response))))
 
 (defun devon-display-event (event)
-  "Display an EVENT in the Devon buffer in a plain format."
+  "Display an EVENT in the Devon buffer, handling Checkpoint events specially.
+For Checkpoint events, extract the ID, add it to `devon-checkpoint-ids`,
+and display it in a specific format. For all other events, display as 'type: content'."
   (let* ((type (cdr (assoc 'type event)))
          (content (cdr (assoc 'content event))))
-    (insert (format "%s: %s\n" type content))))
+    (if (string= type "Checkpoint")
+        (let ((checkpoint-id (cdr (assoc 'id content))))
+          (devon-add-checkpoint-id checkpoint-id)
+          (insert (format "Checkpoint: %s\n" checkpoint-id)))
+      (insert (format "%s: %s\n" type content)))))
 
 (defun devon-update-buffer (events &optional append)
   "Update the Devon buffer with EVENTS.

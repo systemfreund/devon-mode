@@ -49,6 +49,7 @@ You can customize Devon's behavior by using `M-x customize-group RET devon RET` 
 - Debug mode for troubleshooting
 - Conversation export to JSON and Markdown
 - Usage statistics and reporting
+- Special handling and tracking of Checkpoint events
 
 ## Commands
 
