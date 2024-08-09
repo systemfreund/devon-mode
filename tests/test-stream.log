@@ -1,0 +1,10 @@
+HTTP/1.1 200 OK
+date: Sat, 27 Jul 2024 10:28:12 GMT
+server: uvicorn
+content-type: text/event-stream; charset=utf-8
+Transfer-Encoding: chunked
+
+
+data: {"type": "EnvironmentRequest", "content": "cat '/devon-emacs/devon.el'", "producer": "tool", "consumer": "local"}
+
+
