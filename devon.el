@@ -425,6 +425,19 @@ are fetched, a message is displayed to the user."
        (t
         (insert (format "%s:\n%s\n\n\n" type content)))))))
 
+(defvar devon-font-lock-keywords
+  '(("Checkpoint: " . font-lock-comment-delimiter-face)
+    ("Devon (Thought):" . font-lock-keyword-face)
+    ("Devon (Action):" . font-lock-comment-face)
+    ("Devon:" . font-lock-keyword-face)
+    ("Human:" . font-lock-function-name-face)
+    ("Command:" . font-lock-constant-face)
+    ("Result:" . font-lock-string-face)
+    ("Error:" . font-lock-warning-face)
+    ("Task:" . font-lock-doc-face)
+    ("Interrupt:" . font-lock-preprocessor-face))
+  "Font-lock keywords for Devon mode.")
+
 (defun devon-update-buffer (events &optional append)
   "Update the Devon buffer with EVENTS.
 If APPEND is non-nil, append the events to the existing buffer content.
@@ -466,17 +479,6 @@ FILTER can be 'all, 'conversation, or 'no-environment."
     (setq devon-events-filter filter-symbol)
     (devon-log "Devon events filter set to %s" filter)))
 
-
-(defvar devon-font-lock-keywords
-  '(("Devon (Thought): " . font-lock-keyword-face)
-    ("Devon: " . font-lock-keyword-face)
-    ("Human: " . font-lock-function-name-face)
-    ("Command: " . font-lock-constant-face)
-    ("Result: " . font-lock-string-face)
-    ("Error: " . font-lock-warning-face)
-    ("Task: " . font-lock-doc-face)
-    ("Interrupt: " . font-lock-preprocessor-face))
-  "Font-lock keywords for Devon mode.")
 
 (defun devon-configure ()
   "Configure Devon settings."
