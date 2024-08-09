@@ -310,8 +310,8 @@ Respects the `devon-events-filter` setting."
       (devon-add-checkpoint-id content))
     (when display-event
       (if (string= type "Checkpoint")
-          (insert (format "Checkpoint: %s\n" content))
-        (insert (format "%s: %s\n" type content))))))
+          (insert (format "Checkpoint: %s\n\n\n" content))
+        (insert (format "%s: %s\n\n\n" type content))))))
 
 (defun devon-update-buffer (events &optional append)
   "Update the Devon buffer with EVENTS.
