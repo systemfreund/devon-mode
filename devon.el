@@ -241,7 +241,10 @@ Returns the checkpoint_id of the selected checkpoint."
           (let* ((json-string (match-string 2 match)))
             (devon-log "Received event: %s" json-string)
             (let ((event (json-read-from-string json-string)))
-              (devon-process-event event))))
+              (devon-status-consume-event event)
+              (when (string= (cdr (assoc 'type event)) "Stop")
+                (devon-log "Devon has left the chat."))
+              (devon-update-buffer (list event) t))))
         
         (setq devon-stream-buffer (substring devon-stream-buffer match-end)))))
 
@@ -284,13 +287,6 @@ Returns the checkpoint_id of the selected checkpoint."
       (setq new-status 'stopped)))
     (when new-status
       (devon-set-status new-status))))
-
-(defun devon-process-event (event)
-  "Process a single event from the Devon event stream."
-  (devon-status-consume-event event)
-  (when (string= (cdr (assoc 'type event)) "Stop")
-    (devon-log "Devon has left the chat."))
-  (devon-update-buffer (list event) t))
 
 (defun devon-stream-sentinel (proc event)
   "Handle status changes in the Devon event stream."
