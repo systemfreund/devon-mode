@@ -181,12 +181,16 @@ ORIG-FUN is the original function, ARGS are its arguments."
   "Process incoming data from the Devon event stream."
   (setq devon-stream-buffer (concat devon-stream-buffer string))
   (message "[Devon Debug] Received data: %s" string)
+  (message "[Devon Debug] Current buffer length: %d" (length devon-stream-buffer))
   
   (let ((start 0))
     (while (string-match "\\(data: \\(.+\\)\n\n\\)\\|\\(: keepalive\n\n\\)" devon-stream-buffer start)
       (let ((match (match-string 0 devon-stream-buffer))
             (match-start (match-beginning 0))
             (match-end (match-end 0)))
+        
+        (message "[Devon Debug] Match found: %s" match)
+        (message "[Devon Debug] Match start: %d, Match end: %d" match-start match-end)
         
         (if (string-prefix-p ": keepalive" match)
             (message "[Devon Debug] Received keepalive")
@@ -197,10 +201,12 @@ ORIG-FUN is the original function, ARGS are its arguments."
         
         (setq devon-stream-buffer (concat (substring devon-stream-buffer 0 match-start)
                                           (substring devon-stream-buffer match-end)))
+        (message "[Devon Debug] Updated buffer length: %d" (length devon-stream-buffer))
         (setq start match-start))))
   
   (when (> (length devon-stream-buffer) 1000000)  ; Prevent buffer from growing too large
-    (setq devon-stream-buffer (substring devon-stream-buffer -1000000))))
+    (setq devon-stream-buffer (substring devon-stream-buffer -1000000))
+    (message "[Devon Debug] Buffer truncated. New length: %d" (length devon-stream-buffer))))
 
 (defun devon-update-status-from-event (event)
   "Update devon-status based on the event type."
