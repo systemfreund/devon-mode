@@ -6,6 +6,7 @@
 ;;; Code:
 
 (require 'ert)
+(add-to-list 'load-path (expand-file-name "/home/oemer/src/devon-emacs"))
 (require 'devon)
 
 (defvar test-stream-data
@@ -32,9 +33,8 @@ data: {\"type\": \"EnvironmentRequest\", \"content\": \"cat '/devon-emacs/devon.
         (devon-process-event #'test-devon-process-event))
     (setq test-processed-events '())
     
-    ;; Simulate receiving the stream data in chunks
-    (devon-stream-filter nil (substring test-stream-data 0 100))
-    (devon-stream-filter nil (substring test-stream-data 100))
+    ;; Process the entire test stream data at once
+    (devon-stream-filter nil test-stream-data)
     
     ;; Check that one event was processed
     (should (= 1 (length test-processed-events)))

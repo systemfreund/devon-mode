@@ -194,6 +194,7 @@ ORIG-FUN is the original function, ARGS are its arguments."
         
         (if (string-prefix-p ": keepalive" match)
             (message "[Devon Debug] Received keepalive")
+          (string-match "\\(data: \\(.+\\)\\)" match)
           (let* ((json-string (match-string 2 match)))
             (message "[Devon Debug] JSON string before parsing: %s" json-string)
             (let ((event (json-read-from-string json-string)))
