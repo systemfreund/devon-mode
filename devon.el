@@ -70,7 +70,6 @@ Possible values are:
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "RET") 'devon-handle-user-input)
     (define-key map (kbd "C-c d u") 'devon-update-config)
-    (define-key map (kbd "C-c d s") 'devon-print-session-state)
     (define-key map (kbd "C-c d c") 'devon-clear-buffer)
     (define-key map (kbd "C-c d r") 'devon-fetch-and-display-events)
     (define-key map (kbd "C-c C-s r") 'devon-reset-session)
@@ -113,56 +112,6 @@ ORIG-FUN is the original function, ARGS are its arguments."
   (interactive)
   (customize-group 'devon))
 
-;;;###autoload
-(defun devon-print-session-state ()
-  "Fetch and print the current Devon server session state in a new buffer."
-  (interactive)
-  (let* ((url (format "%s:%d/sessions/%s/state" devon-backend-url devon-port devon-session-id))
-         (url-request-method "GET")
-         (response-buffer (url-retrieve-synchronously url nil nil devon-request-timeout))
-         (json-object-type 'hash-table)
-         (json-array-type 'list)
-         (json-key-type 'string))
-    (if (not response-buffer)
-        (message "Error: Unable to fetch Devon server state")
-      (with-current-buffer response-buffer
-        (goto-char (point-min))
-        (re-search-forward "^$")
-        (delete-region (point-min) (point))
-        (condition-case err
-            (let ((response (json-read-from-string (buffer-string))))
-              (with-current-buffer (get-buffer-create "*Devon State*")
-                (erase-buffer)
-                (insert "--- Devon Server State ---\n\n")
-                (maphash (lambda (k v)
-                           (insert (format "%s:\n" k))
-                           (insert (devon-format-state-value v 1))
-                           (insert "\n"))
-                         response)
-                (insert "----------------------------\n")
-                (goto-char (point-min))
-                (display-buffer (current-buffer))))
-          (error
-           (message "Error parsing Devon server state: %s" (error-message-string err))))
-        (kill-buffer response-buffer)))))
-(defun devon-format-state-value (value indent)
-  "Format VALUE with INDENT level for better readability in state output."
-  (let ((indent-str (make-string (* indent 2) ?\s)))
-    (cond
-     ((hash-table-p value)
-      (let ((result ""))
-        (maphash (lambda (k v)
-                   (setq result (concat result (format "%s%s: %s\n" indent-str k (devon-format-state-value v (1+ indent))))))
-                 value)
-        result))
-     ((listp value)
-      (if (seq-empty-p value)
-          "[]"
-        (concat "[\n"
-                (mapconcat (lambda (item) (concat indent-str "  " (devon-format-state-value item (1+ indent)))) value ",\n")
-                (format "\n%s]" indent-str))))
-     ((null value) "nil")
-     (t (format "%s" value)))))
 
 ;; Ensure all functions have proper documentation strings
 (dolist (sym '(devon-conversation-history devon-status devon-port
