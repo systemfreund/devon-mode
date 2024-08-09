@@ -356,7 +356,7 @@ are fetched, a message is displayed to the user."
        ((string= type "UserResponse")
         (insert (propertize (format "Human: %s\n" content) 'face face)))
        ((string= type "UserRequest")
-        (insert (propertize (format "Human Request: %s\n" content) 'face face)))
+        (insert (propertize (format "Devon: %s\n" content) 'face face)))
        ((and (string= type "ModelResponse")
              (not (eq devon-events-filter 'conversation)))
         (let ((parsed-content (json-read-from-string content)))
@@ -420,7 +420,8 @@ FILTER can be 'all, 'conversation, or 'no-environment."
 
 
 (defvar devon-font-lock-keywords
-  '(("Devon: " . font-lock-keyword-face)
+  '(("Devon (Thought): " . font-lock-keyword-face)
+    ("Devon: " . font-lock-keyword-face)
     ("Human: " . font-lock-function-name-face)
     ("Command: " . font-lock-constant-face)
     ("Result: " . font-lock-string-face)
