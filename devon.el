@@ -174,24 +174,41 @@ ORIG-FUN is the original function, ARGS are its arguments."
              (url-filename (url-generic-parse-url url))
              (url-host (url-generic-parse-url devon-backend-url))))))
 
+(defvar devon-stream-buffer ""
+  "Buffer to accumulate incoming SSE data.")
+
 (defun devon-stream-filter (proc string)
   "Process incoming data from the Devon event stream."
-  (message "[Devon Debug] Received string: %s" string)
-  (when (string-match "data: \\(.+\\)\n" string)
-    (let* ((json-string (match-string 1 string))
-           (event (json-read-from-string json-string)))
-      (let ((type (cdr (assoc 'type event))))
-            (cond
-             ((string= type "ModelRequest")
-              (setq devon-status 'thinking)
-              (devon-update-status))
-             ((string= type "UserRequest")
-              (setq devon-status 'waiting-for-user)
-              (devon-update-status))
-             ((string= type "Stop")
-              (message "Devon has left the chat.")
-              (return))))
-      (devon-update-buffer (list event) t))))
+  (setq devon-stream-buffer (concat devon-stream-buffer string))
+  (message "[Devon Debug] Accumulated buffer: %s" devon-stream-buffer)
+  
+  (while (string-match "\\(data: \\(.+\\)\n\n\\)\\|\\(: keepalive\n\n\\)" devon-stream-buffer)
+    (let ((match (match-string 0 devon-stream-buffer)))
+      (setq devon-stream-buffer (substring devon-stream-buffer (match-end 0)))
+      
+      (if (string-prefix-p ": keepalive" match)
+          (message "[Devon Debug] Received keepalive")
+        (let* ((json-string (match-string 2 match))
+               (event (json-read-from-string json-string)))
+          (message "[Devon Debug] Parsed event: %s" event)
+          (devon-process-event event)))))
+  
+  (when (> (length devon-stream-buffer) 1000000)  ; Prevent buffer from growing too large
+    (setq devon-stream-buffer (substring devon-stream-buffer -1000000))))
+
+(defun devon-process-event (event)
+  "Process a single event from the Devon event stream."
+  (let ((type (cdr (assoc 'type event))))
+    (cond
+     ((string= type "ModelRequest")
+      (setq devon-status 'thinking)
+      (devon-update-status))
+     ((string= type "UserRequest")
+      (setq devon-status 'waiting-for-user)
+      (devon-update-status))
+     ((string= type "Stop")
+      (message "Devon has left the chat.")))
+    (devon-update-buffer (list event) t)))
 
 (defun devon-stream-sentinel (proc event)
   "Handle Devon event stream connection state changes."
