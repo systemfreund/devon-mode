@@ -471,7 +471,7 @@ are fetched, a message is displayed to the user."
         (let* ((message (cdr (assoc 'message content)))
                (options (cdr (assoc 'options content))))
           (setq devon-git-options (mapcar #'identity options))
-          (insert (format "Git: %s\nOptions: %s\n" message (mapconcat 'identity options ", ")))))
+          (insert (format "Git:\n%s\n\n\n" message))))
        (t
         (insert (format "%s:\n%s\n\n\n" type content)))))))
 
