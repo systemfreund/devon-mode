@@ -456,7 +456,14 @@ Returns the checkpoint_id of the selected checkpoint."
         (let* ((message (cdr (assoc 'message content)))
                (options (cdr (assoc 'options content))))
           (setq devon-git-options (mapcar #'identity options))
-          (insert (format "Git:\n%s\n\n\n" message))))
+          (insert (format "Git:\n%s\n\n" message))
+          (dolist (option options)
+            (insert-text-button option
+                                'action #'devon-git-option-click
+                                'follow-link t
+                                'help-echo "Click to select this option")
+            (insert "\n"))
+          (insert "\n"))))
        (t
         (insert (format "%s:\n%s\n\n\n" type content)))))))
 
@@ -543,15 +550,20 @@ FILTER can be 'all, 'conversation, or 'no-environment."
 (defun devon-handle-user-input ()
   "Handle user input and send responses to the Devon session."
   (interactive)
-  (if devon-pending-git-question
-      (let ((input (completing-read "Git Response> " devon-git-options nil t)))
-        (devon-git-resolve input)
-        (setq devon-pending-git-question nil)
-        (setq devon-git-options nil)
+  (if (not devon-pending-git-question)
+      (let ((input (read-string "To Devon> ")))
+        (devon-send-response input)
         (devon-set-status 'thinking))
-    (let ((input (read-string "To Devon> ")))
-      (devon-send-response input)
-      (devon-set-status 'thinking))))
+    (message "Please click on one of the Git options above.")))
+
+(defun devon-git-option-click (button)
+  "Handle clicks on Git option buttons."
+  (let ((option (button-label button)))
+    (devon-git-resolve option)
+    (setq devon-pending-git-question nil)
+    (setq devon-git-options nil)
+    (devon-set-status 'thinking)
+    (message "Selected Git option: %s" option)))
 
 (defun devon-initialize-buffer (&optional skip-event-loop)
   "Initialize the Devon buffer and optionally start the event loop with PORT.
