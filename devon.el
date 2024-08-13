@@ -424,7 +424,7 @@ Returns the checkpoint_id of the selected checkpoint."
      ("consumer" . "devon"))))
 
 (defun devon-display-event (event)
-  "Display an EVENT in the Devon buffer. Respects the `devon-events-filter` setting."
+  "Display an EVENT in the Devon buffer.  Respects the `devon-events-filter` setting."
   (let* ((type (cdr (assoc 'type event)))
          (content (cdr (assoc 'content event)))
          (display-event
@@ -463,7 +463,7 @@ Returns the checkpoint_id of the selected checkpoint."
                                 'follow-link t
                                 'help-echo "Click to select this option")
             (insert "\n"))
-          (insert "\n"))))
+          (insert "\n")))
        (t
         (insert (format "%s:\n%s\n\n\n" type content)))))))
 
