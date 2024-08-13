@@ -7,8 +7,7 @@
 ;; URL: https://github.com/yourusername/devon-emacs
 
 ;;; Commentary:
-;; This is an Emacs extension that replicates the features of the Devon TUI.
-;; It provides an interactive interface for communicating with the Devon AI assistant.
+;; This is an Emacs extension that provides an interactive interface for communicating with the Devon AI assistant.
 
 ;;; Code:
 
@@ -84,9 +83,8 @@ Possible values are:
 (defvar devon-mode-map
   (let ((map (make-sparse-keymap)))
     (define-key map (kbd "RET") 'devon-handle-user-input)
-    (define-key map (kbd "C-c d u") 'devon-update-config)
     (define-key map (kbd "C-c d c") 'devon-clear-buffer)
-    (define-key map (kbd "C-c d r") 'devon-fetch-and-display-events)
+    (define-key map (kbd "C-c d r") 'devon-reload-events)
     (define-key map (kbd "C-c C-s r") 'devon-reset-session)
     (define-key map (kbd "C-c C-s c") 'devon-create-session)
     (define-key map (kbd "C-c C-s s") 'devon-start-session)
@@ -96,9 +94,8 @@ Possible values are:
 \\{devon-mode-map}
 
 \\[devon-handle-user-input] - Handle user input
-\\[devon-update-config] - Update Devon configuration
 \\[devon-clear-buffer] - Clear Devon buffer
-\\[devon-fetch-and-display-events] - Fetch and display events
+\\[devon-reload-events] - Reload events
 \\[devon-reset-session] - Reset Devon session
 \\[devon-create-session] - Create a new Devon session
 \\[devon-start-session] - Start Devon session
@@ -121,12 +118,6 @@ ORIG-FUN is the original function, ARGS are its arguments."
      (devon-handle-network-error (car err) (cdr err)))))
 
 (advice-add 'url-http :around #'devon-url-http-around-advice)
-
-;;;###autoload
-(defun devon-update-config ()
-  "Update Devon configuration interactively."
-  (interactive)
-  (customize-group 'devon))
 
 (defun devon-start-event-stream (&optional replay-events)
   "Start streaming events from the Devon server.
@@ -325,11 +316,8 @@ Returns the checkpoint_id of the selected checkpoint."
       (devon-log "Error fetching Devon events from server: No response received")
       nil)))
 
-(defun devon-fetch-and-display-events ()
-  "Fetch events from the Devon server and update the buffer.
-This function retrieves events using `devon-fetch-events` and then
-updates the Devon buffer using `devon-update-buffer`. If no events
-are fetched, a message is displayed to the user."
+(defun devon-reload-events ()
+  "Fetch events from the Devon server and update the buffer."
   (interactive)
   (let ((events (devon-fetch-events)))
     (if events
@@ -337,9 +325,7 @@ are fetched, a message is displayed to the user."
           (devon-update-buffer events)
           (when-let ((last-event (car (last events))))
             (devon-status-consume-event last-event)))
-          (devon-update-buffer events)
-          (devon-log "Devon buffer updated with new events."))
-      (devon-log "No new events to display.")))
+          (devon-update-buffer events))))
 
 (defun devon-send-response (response)
   "Send a RESPONSE to the session with the given PORT."
@@ -392,8 +378,7 @@ are fetched, a message is displayed to the user."
 (defcustom devon-versioning-type 'none
   "Versioning type"
   :type '(choice (const :tag "none" none)
-                 (const :tag "git" git)
-                 (const :tag "fossil" fossil))
+                 (const :tag "git" git))
   :group 'devon)
 
 (defun devon-create-session (project-path &optional)
