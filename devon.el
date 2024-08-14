@@ -70,7 +70,7 @@ Possible values are:
 (defvar devon-status 'idle
   "Current status of Devon: 'idle, 'thinking, or 'waiting-for-user.")
 
-(defvar devon-session-state 'paused
+(defvar devon-session-state nil
   "Current state of the server session: 'paused, 'running.")
 
 (defvar devon-event-stream-status nil
@@ -152,6 +152,7 @@ If REPLAY-EVENTS is non-nil, replay existing events after starting the stream."
     (delete-process devon-stream-process)
     (setq devon-stream-process nil)
     (setq devon-stream-buffer "")
+    (setq devon-session-state nil)
     (when (get-buffer "*devon-event-stream*")
       (kill-buffer "*devon-event-stream*"))
     (devon-set-event-stream-status nil)))
@@ -252,7 +253,11 @@ Returns the checkpoint_id of the selected checkpoint."
     (when (not (eq devon-session-state new-state-symbol))
       (setq devon-session-state new-state-symbol)
       (devon-log "Devon session state changed to: %s" new-state)
-      (devon-modeline-update))))
+      (devon-modeline-update)
+      (if (eq 'paused devon-session-state)
+          ;; TODO show clickable link in "Devon" buffer which calls `devon-start-session` when clicked
+          )
+      )))
 
 (defun devon-set-event-stream-status (new-status)
   "Set the Devon event stream status and update the mode line."
@@ -580,7 +585,8 @@ If SKIP-EVENT-LOOP is non-nil, don't start the event loop (useful for testing)."
     (switch-to-buffer buffer))
   (unless skip-event-loop
     ;;(devon-start-update-timer)
-    (devon-start-event-stream t)))
+    (devon-start-event-stream t)
+    (devon-update-session-state)))
 
 (provide 'devon)
 
