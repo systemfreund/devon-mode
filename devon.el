@@ -247,6 +247,18 @@ Returns the checkpoint_id of the selected checkpoint."
   (devon-log "Devon status changed to: %s" new-status)
   (devon-modeline-update))
 
+(defun devon-insert-start-session-link ()
+  "Insert a clickable link in the Devon buffer to start the session."
+  (with-current-buffer (get-buffer-create "*Devon*")
+    (let ((inhibit-read-only t))
+      (goto-char (point-max))
+      (insert "\n")
+      (insert-text-button "Start Session"
+                          'action (lambda (_) (devon-start-session))
+                          'follow-link t
+                          'help-echo "Click to start the Devon session")
+      (insert "\n"))))
+
 (defun devon-set-session-state (new-state)
   "Set the Devon session state and update the mode line."
   (let ((new-state-symbol (intern new-state)))
@@ -254,10 +266,8 @@ Returns the checkpoint_id of the selected checkpoint."
       (setq devon-session-state new-state-symbol)
       (devon-log "Devon session state changed to: %s" new-state)
       (devon-modeline-update)
-      (if (eq 'paused devon-session-state)
-          ;; TODO show clickable link in "Devon" buffer which calls `devon-start-session` when clicked
-          )
-      )))
+      (when (eq 'paused devon-session-state)
+        (devon-insert-start-session-link)))))
 
 (defun devon-set-event-stream-status (new-status)
   "Set the Devon event stream status and update the mode line."
