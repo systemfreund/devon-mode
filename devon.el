@@ -257,7 +257,7 @@ Returns the checkpoint_id of the selected checkpoint."
                           'action (lambda (_) (devon-start-session))
                           'follow-link t
                           'help-echo "Click to start the Devon session")
-      (insert "\n"))))
+      (insert "\n\n"))))
 
 (defun devon-set-session-state (new-state)
   "Set the Devon session state and update the mode line."
@@ -437,6 +437,16 @@ Returns the checkpoint_id of the selected checkpoint."
      ("producer" . "human")
      ("consumer" . "devon"))))
 
+(defun devon-stop-session ()
+  "Send Stop event."    
+  (interactive)
+  (devon-send-event
+   `(
+     ("type" . "Stop")
+     ("content" . nil)
+     ("producer" . "human")
+     ("consumer" . "devon"))))
+
 (defun devon-display-event (event)
   "Display an EVENT in the Devon buffer.  Respects the `devon-events-filter` setting."
   (let* ((type (cdr (assoc 'type event)))
@@ -476,7 +486,7 @@ Returns the checkpoint_id of the selected checkpoint."
                                 'action #'devon-git-option-click
                                 'follow-link t
                                 'help-echo "Click to select this option"))
-          (insert "\n")))
+          (insert "\n\n")))
        (t
         (insert (format "%s:\n%s\n\n\n" type content)))))))
 
