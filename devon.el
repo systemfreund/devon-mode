@@ -141,7 +141,6 @@ If REPLAY-EVENTS is non-nil, replay existing events after starting the stream."
              (url-host (url-generic-parse-url devon-backend-url))))
     (devon-set-event-stream-status "active")
     (when replay-events
-      ;; Replay existing events:
       (mapc (lambda (event)
               (devon-stream-filter nil (concat "data: " (json-encode event) "\n\n")))
             (devon-fetch-events)))))
@@ -152,6 +151,7 @@ If REPLAY-EVENTS is non-nil, replay existing events after starting the stream."
   (when devon-stream-process
     (delete-process devon-stream-process)
     (setq devon-stream-process nil)
+    (setq devon-stream-buffer "")
     (when (get-buffer "*devon-event-stream*")
       (kill-buffer "*devon-event-stream*"))
     (devon-set-event-stream-status nil)))
@@ -224,9 +224,7 @@ Returns the checkpoint_id of the selected checkpoint."
   (setq devon-stream-buffer (concat devon-stream-buffer string))
   (while (string-match "\\(data: \\(.+\\)\n\n\\)\\|\\(: keepalive\n\n\\)" devon-stream-buffer)
       (let ((match (match-string 0 devon-stream-buffer))
-            (match-start (match-beginning 0))
-            (match-end (match-end 0)))
-        
+            (match-stop (match-end 0)))
         (if (string-prefix-p ": keepalive" match)
             (devon-log "Received keepalive")
           (string-match "\\(data: \\(.+\\)\\)" match)
@@ -234,11 +232,9 @@ Returns the checkpoint_id of the selected checkpoint."
             (devon-log "Received event: %s" json-string)
             (let ((event (json-read-from-string json-string)))
               (devon-status-consume-event event)
-              (when (string= (cdr (assoc 'type event)) "Stop")
-                (devon-log "Devon has left the chat."))
               (devon-update-buffer (list event) t))))
         
-        (setq devon-stream-buffer (substring devon-stream-buffer match-end)))))
+        (setq devon-stream-buffer (substring devon-stream-buffer match-stop)))))
 
 (defun devon-modeline-update ()
   "Update the mode line to reflect the current Devon status."
@@ -276,7 +272,10 @@ Returns the checkpoint_id of the selected checkpoint."
      ((string= type "GitAskUser")
       (setq new-status 'waiting-for-user))
      ((string= type "Stop")
-      (setq new-status 'stopped)))
+      (setq new-status 'stopped))
+     ((string= type "GitResolve")
+      (setq devon-pending-git-question nil)
+      (setq devon-git-options nil)))
     (when new-status
       (devon-set-status new-status))))
 
@@ -431,7 +430,7 @@ Returns the checkpoint_id of the selected checkpoint."
           (cond
            ((eq devon-events-filter 'all) t)
            ((eq devon-events-filter 'conversation)
-            (member type '("UserRequest" "UserResponse" "Checkpoint" "GitError" "GitAskUser" "GitResolve" "ModelResponse" "Task" "Error" "Stop")))
+            (member type '("UserRequest" "UserResponse" "Checkpoint" "GitError" "GitCorrupted" "GitAskUser" "GitResolve" "ModelResponse" "Task" "Error" "Stop")))
            (t t))))
     (when display-event
       (cond
@@ -457,7 +456,7 @@ Returns the checkpoint_id of the selected checkpoint."
                (options (cdr (assoc 'options content))))
           (setq devon-git-options (mapcar #'identity options))
           (insert (format "Git:\n%s\n\n" message))
-          (dolist (option options)
+          (dolist (option devon-git-options)
             (insert-text-button option
                                 'action #'devon-git-option-click
                                 'follow-link t
@@ -558,12 +557,13 @@ FILTER can be 'all, 'conversation, or 'no-environment."
 
 (defun devon-git-option-click (button)
   "Handle clicks on Git option buttons."
-  (let ((option (button-label button)))
+  (if devon-pending-git-question
+      (let ((option (button-label button)))
     (devon-git-resolve option)
     (setq devon-pending-git-question nil)
     (setq devon-git-options nil)
     (devon-set-status 'thinking)
-    (message "Selected Git option: %s" option)))
+    (message "Selected Git option: %s" option))))
 
 (defun devon-initialize-buffer (&optional skip-event-loop)
   "Initialize the Devon buffer and optionally start the event loop with PORT.
