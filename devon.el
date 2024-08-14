@@ -252,8 +252,8 @@ Returns the checkpoint_id of the selected checkpoint."
   (with-current-buffer (get-buffer-create "*Devon*")
     (let ((inhibit-read-only t))
       (goto-char (point-max))
-      (insert "\n")
-      (insert-text-button "Start Session"
+      (insert "\nSession is currently paused.\n")
+      (insert-text-button "[Start Session]"
                           'action (lambda (_) (devon-start-session))
                           'follow-link t
                           'help-echo "Click to start the Devon session")
@@ -472,11 +472,10 @@ Returns the checkpoint_id of the selected checkpoint."
           (setq devon-git-options (mapcar #'identity options))
           (insert (format "Git:\n%s\n\n" message))
           (dolist (option devon-git-options)
-            (insert-text-button option
+            (insert-text-button (concat "[" option "]  ")
                                 'action #'devon-git-option-click
                                 'follow-link t
-                                'help-echo "Click to select this option")
-            (insert "\n"))
+                                'help-echo "Click to select this option"))
           (insert "\n")))
        (t
         (insert (format "%s:\n%s\n\n\n" type content)))))))
