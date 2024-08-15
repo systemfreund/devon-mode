@@ -382,7 +382,7 @@ Returns the checkpoint_id of the selected checkpoint."
                 response))))
       (error
        (devon-log "Error updating session state: %s" (error-message-string err))
-       nil))))
+       (devon-set-session-state 'error)))))
 
 (defun devon-create-session (project-path &optional)
   "Create a new Devon session for the project at PROJECT-PATH."
@@ -543,6 +543,12 @@ FILTER can be 'all, 'conversation, or 'no-environment."
 (defcustom devon-default-port 10000
   "Default port for Devon server."
   :type 'integer
+  :group 'devon)
+
+(defcustom devon-versioning-type 'none
+  "Versioning type"
+  :type '(choice (const :tag "none" none)
+                 (const :tag "git" git))
   :group 'devon)
 
 ;;;###autoload
