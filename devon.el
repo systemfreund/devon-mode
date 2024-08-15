@@ -19,14 +19,9 @@
   "Customization group for Devon."
   :group 'applications)
 
-(defcustom devon-backend-url "http://localhost"
-  "URL of the Devon backend server."
+(defcustom devon-backend-url "http://localhost:10000"
+  "URL of the Devon backend server, including the port."
   :type 'string
-  :group 'devon)
-
-(defcustom devon-port 10000
-  "Default port for Devon server."
-  :type 'integer
   :group 'devon)
 
 (defcustom devon-request-timeout 5
@@ -124,13 +119,13 @@ ORIG-FUN is the original function, ARGS are its arguments."
 If REPLAY-EVENTS is non-nil, replay existing events after starting the stream."
   (interactive)
   (devon-stop-event-stream)
-  (let ((url (format "%s:%d/sessions/%s/events/stream" devon-backend-url devon-port devon-session-id)))
+  (let ((url (format "%s/sessions/%s/events/stream" devon-backend-url devon-session-id)))
     (setq devon-stream-process
           (make-network-process
            :name "devon-event-stream"
            :buffer (generate-new-buffer "*devon-event-stream*")
            :host (url-host (url-generic-parse-url devon-backend-url))
-           :service devon-port
+           :service (url-port (url-generic-parse-url devon-backend-url))
            :family 'ipv4
            :filter 'devon-stream-filter
            :sentinel 'devon-stream-sentinel))
@@ -179,7 +174,7 @@ If REPLAY-EVENTS is non-nil, replay existing events after starting the stream."
 
 (defun devon-fetch-config ()
   "Fetch the current session data and configuration from the Devon server."
-  (let* ((url (format "%s:%d/sessions/%s/config" devon-backend-url devon-port devon-session-id))
+  (let* ((url (format "%s/sessions/%s/config" devon-backend-url devon-session-id))
          (url-request-method "GET")
          (url-request-extra-headers '(("Content-Type" . "application/json")))
          (buffer (with-timeout (devon-request-timeout
@@ -310,7 +305,7 @@ Returns the checkpoint_id of the selected checkpoint."
 
 (defun devon-fetch-events ()
   "Fetch events from the Devon server."
-  (let* ((url (format "%s:%d/sessions/%s/events" devon-backend-url devon-port devon-session-id))
+  (let* ((url (format "%s/sessions/%s/events" devon-backend-url devon-session-id))
          (url-request-method "GET")
          (url-request-extra-headers '(("Content-Type" . "application/json")))
          (buffer (with-timeout (devon-request-timeout
@@ -342,9 +337,9 @@ Returns the checkpoint_id of the selected checkpoint."
           (devon-update-buffer events))))
 
 (defun devon-send-response (response)
-  "Send a RESPONSE to the session with the given PORT."
+  "Send a RESPONSE to the session."
   (let ((url-request-method "POST")
-        (url (format "%s:%d/sessions/%s/response?response=%s" devon-backend-url devon-port devon-session-id (url-hexify-string response))))
+        (url (format "%s/sessions/%s/response?response=%s" devon-backend-url devon-session-id (url-hexify-string response))))
     (with-current-buffer (url-retrieve-synchronously url)
       (goto-char url-http-end-of-headers)
       (json-read))))
@@ -353,7 +348,7 @@ Returns the checkpoint_id of the selected checkpoint."
   (interactive)
   (devon-update-buffer '())
   (let ((url-request-method "PATCH")
-        (url (format "%s:%d/sessions/%s/reset" devon-backend-url devon-port devon-session-id)))
+        (url (format "%s/sessions/%s/reset" devon-backend-url devon-session-id)))
     (with-current-buffer (url-retrieve-synchronously url)
       (goto-char url-http-end-of-headers)
       (json-read))
@@ -363,7 +358,7 @@ Returns the checkpoint_id of the selected checkpoint."
   "Start the Devon session and update the session state."
   (interactive)
   (let ((url-request-method "PATCH")
-        (url (format "%s:%d/sessions/%s/start" devon-backend-url devon-port devon-session-id)))
+        (url (format "%s/sessions/%s/start" devon-backend-url devon-session-id)))
     (with-current-buffer (url-retrieve-synchronously url)
       (goto-char url-http-end-of-headers)
       (let ((response (json-read)))
@@ -377,7 +372,7 @@ Returns the checkpoint_id of the selected checkpoint."
   (when (get-buffer "*Devon*")
     (condition-case err
         (let ((url-request-method "GET")
-              (url (format "%s:%d/sessions/%s/status" devon-backend-url devon-port devon-session-id)))
+              (url (format "%s/sessions/%s/status" devon-backend-url devon-session-id)))
           (with-current-buffer (url-retrieve-synchronously url nil t devon-request-timeout)
             (if (>= url-http-response-status 400)
                 (error "HTTP error: %s" url-http-response-status)
@@ -387,19 +382,13 @@ Returns the checkpoint_id of the selected checkpoint."
                 response))))
       (error
        (devon-log "Error updating session state: %s" (error-message-string err))
-       (devon-set-session-state 'error)))))
-
-(defcustom devon-versioning-type 'none
-  "Versioning type"
-  :type '(choice (const :tag "none" none)
-                 (const :tag "git" git))
-  :group 'devon)
+       nil))))
 
 (defun devon-create-session (project-path &optional)
   "Create a new Devon session for the project at PROJECT-PATH."
   (interactive "DProject path: ")
   (let* ((url-request-method "POST")
-         (url (format "%s:%d/sessions/%s?path=%s" devon-backend-url devon-port devon-session-id project-path))
+         (url (format "%s/sessions/%s?path=%s" devon-backend-url devon-session-id project-path))
          (url-request-extra-headers '(("Content-Type" . "application/json")))
          (url-request-data
           (json-encode

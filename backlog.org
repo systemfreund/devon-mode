@@ -1,5 +1,5 @@
-* refactor devon-status-consume-event such that devon-set-status is only called once
-* include devon-status in devon-mode-line-format
-* include path in mode line (/config path)
-* include current task in mode line (/config state.task)
-* show [Devon Debug] logs not as messages but in a separate '*Devon logs*' buffer the user can inspect
+* TODO on `Stop` update session state
+* TODO Remove "Devon Events Filter" -> conversation mode default
+* TODO Add filter for thoughts
+* TODO include path in mode line (/config path)
+* TODO include current task in mode line (/config state.task)
